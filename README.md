@@ -8,7 +8,7 @@ the good:
 
 the bad:
 
+- not very tested
 - has no notion of labels
 - checks every instruction against hundreds of regexes
-- might not entirely comply with bgb/no$gmb mnemonics
-- it's only a module and not an executable script
+- it's only a module and nothing executable
