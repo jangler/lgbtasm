@@ -21,3 +21,7 @@ assert(x == 0x21 and y == 0x92 and z == 0xc6)
 -- prefix cb instruction
 x, y, z = lgbtasm.compile_line('bit 4,a')
 assert(x == 0xcb and y == 0x67 and z == nil)
+
+-- line with indent and comment
+x, y, z = lgbtasm.compile_line('    cp b -- comment')
+assert(x == 0xb8 and y == nil and z == nil)

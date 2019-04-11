@@ -557,13 +557,16 @@ function M.compile_line(line)
     for pattern, code in pairs(opcodes) do
         arg = string.match(line, pattern)
         if arg ~= nil then
-            if #arg == 2 then
+            if tonumber(arg, 16) == nil then
+                return code
+            elseif #arg == 2 then
                 return code, tonumber(arg, 16)
             elseif #arg == 4 then
                 return code, tonumber(arg, 16) % 0x100,
                     math.floor(tonumber(arg, 16) / 0x100)
             else
-                return code -- TODO things like 'halt' will not reach here
+                -- should be unreachable if patterns are correct
+                error('bad argument for instruction ' .. line)
             end
         end
     end
