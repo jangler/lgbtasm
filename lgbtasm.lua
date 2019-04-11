@@ -4,6 +4,9 @@ local M = {}
 -- optionally be prefixed with $. in other words, 'ld a,3f' and 'ld a,$3f' are
 -- both acceptable. upper-case hexadecimals are fine too.
 --
+-- some of the mnemonics might not be correct for bgb / no$gmb. i haven't
+-- checked them all yet.
+--
 -- any non-alphanumeric character not part of the asm syntax is interpreted as
 -- the beginning of a comment, and the rest of the line is ignored.
 
@@ -529,7 +532,7 @@ local cb_mnemonics = {
 }
 cb_mnemonics[0] = 'rlc b'
 
--- create opcode lookup tables from mnemonic lookup tables.
+-- create opcode pattern-matching tables from mnemonics
 opcodes = {}
 for code, mnemonic in pairs(mnemonics) do
     mnemonic = string.gsub(mnemonic, '([()])', '%%%1')
@@ -538,9 +541,9 @@ for code, mnemonic in pairs(mnemonics) do
     opcodes[mnemonic] = code
 end
 
+-- same for cb-prefixed opcodes, but those don't receive arguments
 cb_opcodes = {}
 for code, mnemonic in pairs(cb_mnemonics) do
-    -- prefix opcodes don't get arguments, so no need for pattern matching
     cb_opcodes[mnemonic] = code
 end
 
@@ -552,8 +555,7 @@ function M.compile_line(line)
     comment_index = string.find(line, ' ;') or -1
     line = string.sub(line, 1, comment_index) -- strip comment
 
-    -- check line vs all mnemonic patterns
-    -- TODO this is slow. it would be better to be able to directly index.
+    -- check line vs all non-prefix mnemonic patterns
     for pattern, code in pairs(opcodes) do
         arg = string.match(line, pattern)
         if arg ~= nil then
@@ -571,6 +573,7 @@ function M.compile_line(line)
         end
     end
 
+    -- prefixed opcodes can be indexed directly
     cb_code = cb_opcodes[line]
     if cb_code ~= nil then
         return 0xcb, cb_code
