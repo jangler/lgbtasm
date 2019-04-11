@@ -531,14 +531,47 @@ cb_mnemonics[0] = 'rlc b'
 
 -- create opcode lookup tables from mnemonic lookup tables.
 opcodes = {}
-for code, mnemonic in ipairs(mnemonics) do
+for code, mnemonic in pairs(mnemonics) do
+    mnemonic = string.gsub(mnemonic, '([()])', '%%%1')
+    mnemonic = string.gsub(mnemonic, '%a8', '$?(%%x%%x)')
+    mnemonic = string.gsub(mnemonic, '%a16', '$?(%%x%%x%%x%%x)')
     opcodes[mnemonic] = code
 end
 
--- (same for cb prefix.)
 cb_opcodes = {}
-for code, mnemonic in ipairs(cb_mnemonics) do
+for code, mnemonic in pairs(cb_mnemonics) do
+    -- prefix opcodes don't get arguments, so no need for pattern matching
     cb_opcodes[mnemonic] = code
+end
+
+-- parses a line and returns its machine code as a series of bytes. nil is
+-- returned if the line does not match any mnemonic.
+function M.compile_line(line)
+    line = string.lower(line)
+    line = string.sub(line, string.find(line, '%a'), -1) -- strip indent
+    comment_index = string.find(line, ' ;') or -1
+    line = string.sub(line, 1, comment_index) -- strip comment
+
+    -- check line vs all mnemonic patterns
+    -- TODO this is slow. it would be better to be able to directly index.
+    for pattern, code in pairs(opcodes) do
+        arg = string.match(line, pattern)
+        if arg ~= nil then
+            if #arg == 2 then
+                return code, tonumber(arg, 16)
+            elseif #arg == 4 then
+                return code, tonumber(arg, 16) % 0x100,
+                    math.floor(tonumber(arg, 16) / 0x100)
+            else
+                return code -- TODO things like 'halt' will not reach here
+            end
+        end
+    end
+
+    cb_code = cb_opcodes[line]
+    if cb_code ~= nil then
+        return 0xcb, cb_code
+    end
 end
 
 return M

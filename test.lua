@@ -1,4 +1,23 @@
 #!/usr/bin/env lua
 
--- just check that require works, nothing else.
-require '.../lgbtasm'
+lgbtasm = require '.../lgbtasm'
+
+-- invalid instruction
+x, y, z  = lgbtasm.compile_line('invalid')
+assert(x == nil and y == nil and z == nil)
+
+-- nullary instruction
+x, y, z = lgbtasm.compile_line('ld b,a')
+assert(x == 0x47 and y == nil and z == nil)
+
+-- unary instruction
+x, y, z  = lgbtasm.compile_line('ld a,$3f')
+assert(x == 0x3e and y == 0x3f and z == nil)
+
+-- binary instruction
+x, y, z = lgbtasm.compile_line('ld hl,$c692')
+assert(x == 0x21 and y == 0x92 and z == 0xc6)
+
+-- prefix cb instruction
+x, y, z = lgbtasm.compile_line('bit 4,a')
+assert(x == 0xcb and y == 0x67 and z == nil)
