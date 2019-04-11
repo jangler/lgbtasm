@@ -10,5 +10,4 @@ the bad:
 
 - not very tested
 - has no notion of labels
-- checks every instruction against hundreds of regexes
 - it's only a module and nothing executable
