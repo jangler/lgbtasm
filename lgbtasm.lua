@@ -11,261 +11,261 @@ local M = {}
 -- can't be iterated over like an array, since it starts at zero and contains
 -- nil values.
 local mnemonics = {
-    'ld bc,d16',        -- 01
-    'ld (bc),a',        -- 02
-    'inc bc',           -- 03
-    'inc b',            -- 04
-    'dec b',            -- 05
-    'ld b,d8',          -- 06
-    'rlca',             -- 07
-    'ld (a16),sp',      -- 08
-    'add hl,bc',        -- 09
-    'ld a,(bc)',        -- 0a
-    'dec bc',           -- 0b
-    'inc c',            -- 0c
-    'dec c',            -- 0d
-    'ld c,d8',          -- 0e
-    'rrca',             -- 0f
-    'stop 0',           -- 10
-    'ld de,d16',        -- 11
-    'ld (de),a',        -- 12
-    'inc de',           -- 13
-    'inc d',            -- 14
-    'dec d',            -- 15
-    'ld d,d8',          -- 16
-    'rla',              -- 17
-    'jr r8',            -- 18
-    'add hl,de',        -- 19
-    'ld a,(de)',        -- 1a
-    'dec de',           -- 1b
-    'inc e',            -- 1c
-    'dec e',            -- 1d
-    'ld e,d8',          -- 1e
-    'rra',              -- 1f
-    'jr nz,r8',         -- 20
-    'ld hl,d16',        -- 21
-    'ldi (hl),a',       -- 22
-    'inc hl',           -- 23
-    'inc h',            -- 24
-    'dec h',            -- 25
-    'ld h,d8',          -- 26
-    'daa',              -- 27
-    'jr z,r8',          -- 28
-    'add hl,hl',        -- 29
-    'ldi a,(hl)',       -- 2a
-    'dec hl',           -- 2b
-    'inc l',            -- 2c
-    'dec l',            -- 2d
-    'ld l,d8',          -- 2e
-    'cpl',              -- 2f
-    'jr nc,r8',         -- 30
-    'ld sp,d16',        -- 31
-    'ldd (hl),a',       -- 32
-    'inc sp',           -- 33
-    'inc (hl)',         -- 34
-    'dec (hl)',         -- 35
-    'ld (hl),d8',       -- 36
-    'scf',              -- 37
-    'jr c,r8',          -- 38
-    'add hl,sp',        -- 39
-    'ldd a,(hl)',       -- 3a
-    'dec sp',           -- 3b
-    'inc a',            -- 3c
-    'dec a',            -- 3d
-    'ld a,d8',          -- 3e
-    'ccf',              -- 3f
-    'ld b,b',           -- 40
-    'ld b,c',           -- 41
-    'ld b,d',           -- 42
-    'ld b,e',           -- 43
-    'ld b,h',           -- 44
-    'ld b,l',           -- 45
-    'ld b,(hl)',        -- 46
-    'ld b,a',           -- 47
-    'ld c,b',           -- 48
-    'ld c,c',           -- 49
-    'ld c,d',           -- 4a
-    'ld c,e',           -- 4b
-    'ld c,h',           -- 4c
-    'ld c,l',           -- 4d
-    'ld c,(hl)',        -- 4e
-    'ld c,a',           -- 4f
-    'ld d,b',           -- 50
-    'ld d,c',           -- 51
-    'ld d,d',           -- 52
-    'ld d,e',           -- 53
-    'ld d,h',           -- 54
-    'ld d,l',           -- 55
-    'ld d,(hl)',        -- 56
-    'ld d,a',           -- 57
-    'ld e,b',           -- 58
-    'ld e,c',           -- 59
-    'ld e,d',           -- 5a
-    'ld e,e',           -- 5b
-    'ld e,h',           -- 5c
-    'ld e,l',           -- 5d
-    'ld e,(hl)',        -- 5e
-    'ld e,a',           -- 5f
-    'ld h,b',           -- 60
-    'ld h,c',           -- 61
-    'ld h,d',           -- 62
-    'ld h,e',           -- 63
-    'ld h,h',           -- 64
-    'ld h,l',           -- 65
-    'ld h,(hl)',        -- 66
-    'ld h,a',           -- 67
-    'ld l,b',           -- 68
-    'ld l,c',           -- 69
-    'ld l,d',           -- 6a
-    'ld l,e',           -- 6b
-    'ld l,h',           -- 6c
-    'ld l,l',           -- 6d
-    'ld l,(hl)',        -- 6e
-    'ld l,a',           -- 6f
-    'ld (hl),b',        -- 70
-    'ld (hl),c',        -- 71
-    'ld (hl),d',        -- 72
-    'ld (hl),e',        -- 73
-    'ld (hl),h',        -- 74
-    'ld (hl),l',        -- 75
-    'halt',             -- 76
-    'ld (hl),a',        -- 77
-    'ld a,b',           -- 78
-    'ld a,c',           -- 79
-    'ld a,d',           -- 7a
-    'ld a,e',           -- 7b
-    'ld a,h',           -- 7c
-    'ld a,l',           -- 7d
-    'ld a,(hl)',        -- 7e
-    'ld a,a',           -- 7f
-    'add a,b',          -- 80
-    'add a,c',          -- 81
-    'add a,d',          -- 82
-    'add a,e',          -- 83
-    'add a,h',          -- 84
-    'add a,l',          -- 85
-    'add a,(hl)',       -- 86
-    'add a,a',          -- 87
-    'adc a,b',          -- 88
-    'adc a,c',          -- 89
-    'adc a,d',          -- 8a
-    'adc a,e',          -- 8b
-    'adc a,h',          -- 8c
-    'adc a,l',          -- 8d
-    'adc a,(hl)',       -- 8e
-    'adc a,a',          -- 8f
-    'sub b',            -- 90
-    'sub c',            -- 91
-    'sub d',            -- 92
-    'sub e',            -- 93
-    'sub h',            -- 94
-    'sub l',            -- 95
-    'sub (hl)',         -- 96
-    'sub a',            -- 97
-    'sbc a,b',          -- 98
-    'sbc a,c',          -- 99
-    'sbc a,d',          -- 9a
-    'sbc a,e',          -- 9b
-    'sbc a,h',          -- 9c
-    'sbc a,l',          -- 9d
-    'sbc a,(hl)',       -- 9e
-    'sbc a,a',          -- 9f
-    'and b',            -- a0
-    'and c',            -- a1
-    'and d',            -- a2
-    'and e',            -- a3
-    'and h',            -- a4
-    'and l',            -- a5
-    'and (hl)',         -- a6
-    'and a',            -- a7
-    'xor b',            -- a8
-    'xor c',            -- a9
-    'xor d',            -- aa
-    'xor e',            -- ab
-    'xor h',            -- ac
-    'xor l',            -- ad
-    'xor (hl)',         -- ae
-    'xor a',            -- af
-    'or b',             -- b0
-    'or c',             -- b1
-    'or d',             -- b2
-    'or e',             -- b3
-    'or h',             -- b4
-    'or l',             -- b5
-    'or (hl)',          -- b6
-    'or a',             -- b7
-    'cp b',             -- b8
-    'cp c',             -- b9
-    'cp d',             -- ba
-    'cp e',             -- bb
-    'cp h',             -- bc
-    'cp l',             -- bd
-    'cp (hl)',          -- be
-    'cp a',             -- bf
-    'ret nz',           -- c0
-    'pop bc',           -- c1
-    'jp nz,a16',        -- c2
-    'jp a16',           -- c3
-    'call nz,a16',      -- c4
-    'push bc',          -- c5
-    'add a,d8',         -- c6
-    'rst 00h',          -- c7
-    'ret z',            -- c8
-    'ret',              -- c9
-    'jp z,a16',         -- ca
-    'prefix cb',        -- cb
-    'call z,a16',       -- cc
-    'call a16',         -- cd
-    'adc a,d8',         -- ce
-    'rst 08h',          -- cf
-    'ret nc',           -- d0
-    'pop de',           -- d1
-    'jp nc,a16',        -- d2
-    nil,                -- d3
-    'call nc,a16',      -- d4
-    'push de',          -- d5
-    'sub d8',           -- d6
-    'rst 10h',          -- d7
-    'ret c',            -- d8
-    'reti',             -- d9
-    'jp c,a16',         -- da
-    nil,                -- db
-    'call c,a16',       -- dc
-    nil,                -- dd
-    'sbc a,d8',         -- de
-    'rst 18h',          -- df
-    'ld ($?ff00+a8),a', -- e0
-    'pop hl',           -- e1
-    'ld ($?ff00+c),a',  -- e2
-    nil,                -- e3
-    nil,                -- e4
-    'push hl',          -- e5
-    'and d8',           -- e6
-    'rst 20h',          -- e7
-    'add sp,r8',        -- e8
-    'jp (hl)',          -- e9
-    'ld (a16),a',       -- ea
-    nil,                -- eb
-    nil,                -- ec
-    nil,                -- ed
-    'xor d8',           -- ee
-    'rst 28h',          -- ef
-    'ld a,($?ff00+a8)', -- f0
-    'pop af',           -- f1
-    'ld a,($?ff00+c)',  -- f2
-    'di',               -- f3
-    nil,                -- f4
-    'push af',          -- f5
-    'or d8',            -- f6
-    'rst 30h',          -- f7
-    'ld hl,sp+r8',      -- f8
-    'ld sp,hl',         -- f9
-    'ld a,(a16)',       -- fa
-    'ei',               -- fb
-    nil,                -- fc
-    nil,                -- fd
-    'cp d8',            -- fe
-    'rst 38h',          -- ff
+    'ld bc,d16',         -- 01
+    'ld (bc),a',         -- 02
+    'inc bc',            -- 03
+    'inc b',             -- 04
+    'dec b',             -- 05
+    'ld b,d8',           -- 06
+    'rlca',              -- 07
+    'ld (a16),sp',       -- 08
+    'add hl,bc',         -- 09
+    'ld a,(bc)',         -- 0a
+    'dec bc',            -- 0b
+    'inc c',             -- 0c
+    'dec c',             -- 0d
+    'ld c,d8',           -- 0e
+    'rrca',              -- 0f
+    'stop 0',            -- 10
+    'ld de,d16',         -- 11
+    'ld (de),a',         -- 12
+    'inc de',            -- 13
+    'inc d',             -- 14
+    'dec d',             -- 15
+    'ld d,d8',           -- 16
+    'rla',               -- 17
+    'jr r8',             -- 18
+    'add hl,de',         -- 19
+    'ld a,(de)',         -- 1a
+    'dec de',            -- 1b
+    'inc e',             -- 1c
+    'dec e',             -- 1d
+    'ld e,d8',           -- 1e
+    'rra',               -- 1f
+    'jr nz,r8',          -- 20
+    'ld hl,d16',         -- 21
+    'ldi (hl),a',        -- 22
+    'inc hl',            -- 23
+    'inc h',             -- 24
+    'dec h',             -- 25
+    'ld h,d8',           -- 26
+    'daa',               -- 27
+    'jr z,r8',           -- 28
+    'add hl,hl',         -- 29
+    'ldi a,(hl)',        -- 2a
+    'dec hl',            -- 2b
+    'inc l',             -- 2c
+    'dec l',             -- 2d
+    'ld l,d8',           -- 2e
+    'cpl',               -- 2f
+    'jr nc,r8',          -- 30
+    'ld sp,d16',         -- 31
+    'ldd (hl),a',        -- 32
+    'inc sp',            -- 33
+    'inc (hl)',          -- 34
+    'dec (hl)',          -- 35
+    'ld (hl),d8',        -- 36
+    'scf',               -- 37
+    'jr c,r8',           -- 38
+    'add hl,sp',         -- 39
+    'ldd a,(hl)',        -- 3a
+    'dec sp',            -- 3b
+    'inc a',             -- 3c
+    'dec a',             -- 3d
+    'ld a,d8',           -- 3e
+    'ccf',               -- 3f
+    'ld b,b',            -- 40
+    'ld b,c',            -- 41
+    'ld b,d',            -- 42
+    'ld b,e',            -- 43
+    'ld b,h',            -- 44
+    'ld b,l',            -- 45
+    'ld b,(hl)',         -- 46
+    'ld b,a',            -- 47
+    'ld c,b',            -- 48
+    'ld c,c',            -- 49
+    'ld c,d',            -- 4a
+    'ld c,e',            -- 4b
+    'ld c,h',            -- 4c
+    'ld c,l',            -- 4d
+    'ld c,(hl)',         -- 4e
+    'ld c,a',            -- 4f
+    'ld d,b',            -- 50
+    'ld d,c',            -- 51
+    'ld d,d',            -- 52
+    'ld d,e',            -- 53
+    'ld d,h',            -- 54
+    'ld d,l',            -- 55
+    'ld d,(hl)',         -- 56
+    'ld d,a',            -- 57
+    'ld e,b',            -- 58
+    'ld e,c',            -- 59
+    'ld e,d',            -- 5a
+    'ld e,e',            -- 5b
+    'ld e,h',            -- 5c
+    'ld e,l',            -- 5d
+    'ld e,(hl)',         -- 5e
+    'ld e,a',            -- 5f
+    'ld h,b',            -- 60
+    'ld h,c',            -- 61
+    'ld h,d',            -- 62
+    'ld h,e',            -- 63
+    'ld h,h',            -- 64
+    'ld h,l',            -- 65
+    'ld h,(hl)',         -- 66
+    'ld h,a',            -- 67
+    'ld l,b',            -- 68
+    'ld l,c',            -- 69
+    'ld l,d',            -- 6a
+    'ld l,e',            -- 6b
+    'ld l,h',            -- 6c
+    'ld l,l',            -- 6d
+    'ld l,(hl)',         -- 6e
+    'ld l,a',            -- 6f
+    'ld (hl),b',         -- 70
+    'ld (hl),c',         -- 71
+    'ld (hl),d',         -- 72
+    'ld (hl),e',         -- 73
+    'ld (hl),h',         -- 74
+    'ld (hl),l',         -- 75
+    'halt',              -- 76
+    'ld (hl),a',         -- 77
+    'ld a,b',            -- 78
+    'ld a,c',            -- 79
+    'ld a,d',            -- 7a
+    'ld a,e',            -- 7b
+    'ld a,h',            -- 7c
+    'ld a,l',            -- 7d
+    'ld a,(hl)',         -- 7e
+    'ld a,a',            -- 7f
+    'add a,b',           -- 80
+    'add a,c',           -- 81
+    'add a,d',           -- 82
+    'add a,e',           -- 83
+    'add a,h',           -- 84
+    'add a,l',           -- 85
+    'add a,(hl)',        -- 86
+    'add a,a',           -- 87
+    'adc a,b',           -- 88
+    'adc a,c',           -- 89
+    'adc a,d',           -- 8a
+    'adc a,e',           -- 8b
+    'adc a,h',           -- 8c
+    'adc a,l',           -- 8d
+    'adc a,(hl)',        -- 8e
+    'adc a,a',           -- 8f
+    'sub b',             -- 90
+    'sub c',             -- 91
+    'sub d',             -- 92
+    'sub e',             -- 93
+    'sub h',             -- 94
+    'sub l',             -- 95
+    'sub (hl)',          -- 96
+    'sub a',             -- 97
+    'sbc a,b',           -- 98
+    'sbc a,c',           -- 99
+    'sbc a,d',           -- 9a
+    'sbc a,e',           -- 9b
+    'sbc a,h',           -- 9c
+    'sbc a,l',           -- 9d
+    'sbc a,(hl)',        -- 9e
+    'sbc a,a',           -- 9f
+    'and b',             -- a0
+    'and c',             -- a1
+    'and d',             -- a2
+    'and e',             -- a3
+    'and h',             -- a4
+    'and l',             -- a5
+    'and (hl)',          -- a6
+    'and a',             -- a7
+    'xor b',             -- a8
+    'xor c',             -- a9
+    'xor d',             -- aa
+    'xor e',             -- ab
+    'xor h',             -- ac
+    'xor l',             -- ad
+    'xor (hl)',          -- ae
+    'xor a',             -- af
+    'or b',              -- b0
+    'or c',              -- b1
+    'or d',              -- b2
+    'or e',              -- b3
+    'or h',              -- b4
+    'or l',              -- b5
+    'or (hl)',           -- b6
+    'or a',              -- b7
+    'cp b',              -- b8
+    'cp c',              -- b9
+    'cp d',              -- ba
+    'cp e',              -- bb
+    'cp h',              -- bc
+    'cp l',              -- bd
+    'cp (hl)',           -- be
+    'cp a',              -- bf
+    'ret nz',            -- c0
+    'pop bc',            -- c1
+    'jp nz,a16',         -- c2
+    'jp a16',            -- c3
+    'call nz,a16',       -- c4
+    'push bc',           -- c5
+    'add a,d8',          -- c6
+    'rst 00h',           -- c7
+    'ret z',             -- c8
+    'ret',               -- c9
+    'jp z,a16',          -- ca
+    'prefix cb',         -- cb
+    'call z,a16',        -- cc
+    'call a16',          -- cd
+    'adc a,d8',          -- ce
+    'rst 08h',           -- cf
+    'ret nc',            -- d0
+    'pop de',            -- d1
+    'jp nc,a16',         -- d2
+    nil,                 -- d3
+    'call nc,a16',       -- d4
+    'push de',           -- d5
+    'sub d8',            -- d6
+    'rst 10h',           -- d7
+    'ret c',             -- d8
+    'reti',              -- d9
+    'jp c,a16',          -- da
+    nil,                 -- db
+    'call c,a16',        -- dc
+    nil,                 -- dd
+    'sbc a,d8',          -- de
+    'rst 18h',           -- df
+    'ld ($?ff00%+a8),a', -- e0
+    'pop hl',            -- e1
+    'ld ($?ff00%+c),a',  -- e2
+    nil,                 -- e3
+    nil,                 -- e4
+    'push hl',           -- e5
+    'and d8',            -- e6
+    'rst 20h',           -- e7
+    'add sp,r8',         -- e8
+    'jp (hl)',           -- e9
+    'ld (a16),a',        -- ea
+    nil,                 -- eb
+    nil,                 -- ec
+    nil,                 -- ed
+    'xor d8',            -- ee
+    'rst 28h',           -- ef
+    'ld a,($?ff00%+a8)', -- f0
+    'pop af',            -- f1
+    'ld a,($?ff00%+c)',  -- f2
+    'di',                -- f3
+    nil,                 -- f4
+    'push af',           -- f5
+    'or d8',             -- f6
+    'rst 30h',           -- f7
+    'ld hl,sp+r8',       -- f8
+    'ld sp,hl',          -- f9
+    'ld a,(a16)',        -- fa
+    'ei',                -- fb
+    nil,                 -- fc
+    nil,                 -- fd
+    'cp d8',             -- fe
+    'rst 38h',           -- ff
 }
 mnemonics[0] = 'nop'
 
