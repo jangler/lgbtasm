@@ -94,6 +94,10 @@ assert(s == 'ld hl,c692')
 s = lgbtasm.decompile('\xcb\x67')
 assert(s == 'bit 4,a')
 
+-- decompile ldh-type instruction
+s = lgbtasm.decompile('\xe0\xb5')
+assert(s == 'ld (ff00+b5),a')
+
 -- decompile block
 s = lgbtasm.decompile('\x3e\x3f\xcb\x67\xc9', '; ')
 assert(s == 'ld a,3f; bit 4,a; ret')
