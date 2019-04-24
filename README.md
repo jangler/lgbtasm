@@ -1,9 +1,12 @@
 # Lua Game Boy: The Assembler
 
+## Summary
+
 The good:
 
 - Converts assembly to machine code
 - Converts machine code to assembly
+- No external dependencies
 - Lua 5.1 compatible
 
 The bad:
