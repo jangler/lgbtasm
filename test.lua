@@ -29,3 +29,15 @@ assert(x == 0xe0 and y == 0xb5 and z == nil)
 -- line with indent and comment
 x, y, z = lgbtasm.compile_line('    cp b -- comment')
 assert(x == 0xb8 and y == nil and z == nil)
+
+-- block with single instruction
+s = lgbtasm.compile_block('ld bc,0601')
+assert(s == string.char(0x01, 0x01, 0x06))
+
+-- block with multiple instructions, semicolon-delimited
+s = lgbtasm.compile_block('cp b; ret', ';')
+assert(s == string.char(0xb8, 0xc9))
+
+-- block with multiple instructions, newline-delimited
+s = lgbtasm.compile_block('cp b\nret')
+assert(s == string.char(0xb8, 0xc9))

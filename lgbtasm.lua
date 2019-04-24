@@ -591,4 +591,18 @@ function M.compile_line(line)
     end
 end
 
+-- parses a series of instructions and returns the entire block as a byte
+-- string. the optional `delimiter` argument determines what character
+-- separates instructions in the input; it defaults to the newline character.
+function M.compile_block(block, delimiter)
+    delimiter = delimiter or '\n'
+    local pattern = string.format('[^%s]+', delimiter)
+
+    local instructions = {}
+    for line in string.gmatch(block, pattern) do
+        table.insert(instructions, string.char(M.compile_line(line)))
+    end
+    return table.concat(instructions)
+end
+
 return M
