@@ -595,11 +595,11 @@ function M.compile_line(line)
 end
 
 -- parses a series of instructions and returns the entire block as a byte
--- string. the optional `delimiter` argument determines what character
--- separates instructions in the input; it defaults to the newline character.
-function M.compile_block(block, delimiter)
-    delimiter = delimiter or '\n'
-    local pattern = string.format('[^%s]+', delimiter)
+-- string. the optional `delimiters` argument determines what characters can
+-- separate instructions in the input; it defaults to the newline character.
+function M.compile_block(block, delimiters)
+    delimiters = delimiters or '\n'
+    local pattern = string.format('[^%s]+', delimiters)
 
     local instructions = {}
     for line in string.gmatch(block, pattern) do
