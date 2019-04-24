@@ -58,6 +58,10 @@ assert(s == '\xb8\xc9')
 s = lgbtasm.compile('cp b\nret')
 assert(s == '\xb8\xc9')
 
+-- block with commented blank line
+s = lgbtasm.compile('cp b\n; comment\nret')
+assert(s == '\xb8\xc9')
+
 -- block with invalid instruction
 status = pcall(lgbtasm.compile, 'cp b\ninvalid\nret')
 assert(status == false)

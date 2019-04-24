@@ -545,17 +545,26 @@ for code, mnemonic in pairs(cb_mnemonics) do
     cb_opcodes[mnemonic] = code
 end
 
--- as `compile_line()`, but returns a series of bytes instead of a byte string.
-local function compile_line_to_bytes(line)
-    line = string.lower(line)
-    line = string.sub(line, string.find(line, '%a'), -1) -- strip indent
-    line = string.gsub(line, ' a,', ' ')
-
-    -- strip comment
-    local comment_index = string.find(line, ' +[/#;-]')
+-- strips comment, indent, and optional 'a,' from line.
+local function strip_line(line)
+    local comment_index = string.find(line, ' *[/#;-]')
     if comment_index ~= nil then
         line = string.sub(line, 1, comment_index - 1)
     end
+
+    local indent_index = string.find(line, '%a')
+    if indent_index ~= nil then
+        line = string.sub(line, indent_index, -1)
+    end
+
+    line = string.gsub(line, ' a,', ' ')
+
+    return line
+end
+
+-- as `compile_line()`, but returns a series of bytes instead of a byte string.
+local function compile_line_to_bytes(line)
+    line = string.lower(strip_line(line))
 
     -- first try raw match (works for nullary instructions)
     if opcodes[line] ~= nil then
@@ -611,7 +620,9 @@ function M.compile(block, delimiters)
 
     local instructions = {}
     for line in string.gmatch(block, pattern) do
-        table.insert(instructions, compile_line(line))
+        if #strip_line(line) > 0 then
+            table.insert(instructions, compile_line(line))
+        end
     end
     return table.concat(instructions)
 end
