@@ -31,11 +31,11 @@ to an instruction.
 true
 ```
 
-### `decompile(block, delimiters)
+### `decompile(block, delimiters)`
 
 converts a string of machine code into an asm string with instructions
 separated by the optional `delimiter` argument, which defaults to `'\n'`.
-generates an error if an opcode is invalid or if not enough bytes remain in
+generates an error if an opcode is invalid, or if not enough bytes remain in
 the string to satisfy an instruction's argument.
 
 ```

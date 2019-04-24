@@ -618,7 +618,7 @@ end
 
 -- converts a string of machine code into an asm string with instructions
 -- separated by the optional `delimiter` argument, which defaults to `'\n'`.
--- generates an error if an opcode is invalid or if not enough bytes remain in
+-- generates an error if an opcode is invalid, or if not enough bytes remain in
 -- the string to satisfy an instruction's argument.
 function M.decompile(block, delimiter)
     delimiter = delimiter or '\n'
