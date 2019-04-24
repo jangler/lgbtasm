@@ -2,7 +2,8 @@ local M = {}
 
 -- this module uses bgb / no$gmb syntax, although instruction arguments can
 -- optionally be prefixed with $. in other words, 'ld a,3f' and 'ld a,$3f' are
--- both acceptable. instructions and arguments are case-insensitive.
+-- both acceptable. additionally, 'a,' can be omitted from mnemonics—so 'ld 3f'
+-- is also valid. instructions and arguments are case-insensitive.
 --
 -- any non-alphanumeric character not part of the asm syntax is interpreted as
 -- the beginning of a comment, and the rest of the line is ignored.
@@ -224,7 +225,7 @@ local mnemonics = {
     nil,              -- d3
     'call nc,a16',    -- d4
     'push de',        -- d5
-    'sub d8',         -- d6
+    'sub a,d8',       -- d6
     'rst 10h',        -- d7
     'ret c',          -- d8
     'reti',           -- d9
@@ -240,7 +241,7 @@ local mnemonics = {
     nil,              -- e3
     nil,              -- e4
     'push hl',        -- e5
-    'and d8',         -- e6
+    'and a,d8',       -- e6
     'rst 20h',        -- e7
     'add sp,r8',      -- e8
     'jp (hl)',        -- e9
@@ -248,7 +249,7 @@ local mnemonics = {
     nil,              -- eb
     nil,              -- ec
     nil,              -- ed
-    'xor d8',         -- ee
+    'xor a,d8',       -- ee
     'rst 28h',        -- ef
     'ld a,(ff00+a8)', -- f0
     'pop af',         -- f1
@@ -256,7 +257,7 @@ local mnemonics = {
     'di',             -- f3
     nil,              -- f4
     'push af',        -- f5
-    'or d8',          -- f6
+    'or a,d8',        -- f6
     'rst 30h',        -- f7
     'ld hl,sp+r8',    -- f8
     'ld sp,hl',       -- f9
@@ -264,7 +265,7 @@ local mnemonics = {
     'ei',             -- fb
     nil,              -- fc
     nil,              -- fd
-    'cp d8',          -- fe
+    'cp a,d8',        -- fe
     'rst 38h',        -- ff
 }
 mnemonics[0] = 'nop'
@@ -534,6 +535,7 @@ local opcodes = {}
 for code, mnemonic in pairs(mnemonics) do
     mnemonic = string.gsub(mnemonic, '%a8', '')
     mnemonic = string.gsub(mnemonic, '%a16', '')
+    mnemonic = string.gsub(mnemonic, ' a,', ' ')
     opcodes[mnemonic] = code
 end
 
@@ -548,6 +550,7 @@ end
 function M.compile_line(line)
     line = string.lower(line)
     line = string.sub(line, string.find(line, '%a'), -1) -- strip indent
+    line = string.gsub(line, ' a,', ' ')
 
     -- strip comment
     local comment_index = string.find(line, ' +[/#;-]')

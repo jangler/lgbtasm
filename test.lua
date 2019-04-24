@@ -14,8 +14,20 @@ assert(x == 0x47 and y == nil and z == nil)
 x, y, z  = lgbtasm.compile_line('ld a,$3f')
 assert(x == 0x3e and y == 0x3f and z == nil)
 
+-- unary instruction without $
+x, y, z  = lgbtasm.compile_line('ld a,3f')
+assert(x == 0x3e and y == 0x3f and z == nil)
+
+-- unary instruction without 'a,'
+x, y, z  = lgbtasm.compile_line('ld 3f')
+assert(x == 0x3e and y == 0x3f and z == nil)
+
 -- binary instruction
 x, y, z = lgbtasm.compile_line('ld hl,$c692')
+assert(x == 0x21 and y == 0x92 and z == 0xc6)
+
+-- binary instruction without $
+x, y, z = lgbtasm.compile_line('ld hl,c692')
 assert(x == 0x21 and y == 0x92 and z == 0xc6)
 
 -- prefix cb instruction
