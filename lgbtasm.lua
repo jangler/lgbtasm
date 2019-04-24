@@ -545,8 +545,8 @@ for code, mnemonic in pairs(cb_mnemonics) do
     cb_opcodes[mnemonic] = code
 end
 
--- as compile_line, but returns a series of bytes instead of a byte string.
-function compile_line_to_bytes(line)
+-- as `compile_line()`, but returns a series of bytes instead of a byte string.
+local function compile_line_to_bytes(line)
     line = string.lower(line)
     line = string.sub(line, string.find(line, '%a'), -1) -- strip indent
     line = string.gsub(line, ' a,', ' ')
@@ -595,33 +595,32 @@ function compile_line_to_bytes(line)
     error('unknown instruction ' .. line)
 end
 
--- parses a line and returns its machine code as a byte string. generates an
--- error if the line does not match any mnemonic, or if an invalid argument is
--- given to an instruction.
-function M.compile_line(line)
+-- as `compile()`, but treats the input as a single instruction.
+local function compile_line(line)
     return string.char(compile_line_to_bytes(line))
 end
 
--- parses a series of instructions and returns the entire block as a byte
--- string. the optional `delimiters` argument determines what characters can
--- separate instructions in the input; it defaults to the newline character.
--- propogates errors as returned by `compile_line()`.
-function M.compile_block(block, delimiters)
+-- parses a series of instructions and returns the block as a byte string. the
+-- optional `delimiters` argument determines what characters can separate
+-- instructions in the input; it defaults to `'\n'`. generates an error if an
+-- instruction does not match any mnemonic, or if an invalid argument is given
+-- to an instruction.
+function M.compile(block, delimiters)
     delimiters = delimiters or '\n'
     local pattern = string.format('[^%s]+', delimiters)
 
     local instructions = {}
     for line in string.gmatch(block, pattern) do
-        table.insert(instructions, M.compile_line(line))
+        table.insert(instructions, compile_line(line))
     end
     return table.concat(instructions)
 end
 
 -- converts a string of machine code into an asm string with instructions
--- separated by the optional `delimiter` argument, which defaults to the
--- newline character. generates an error if an opcode is invalid or if not
--- enough bytes remain in the string to satisfy an instruction's argument.
-function M.decompile_block(block, delimiter)
+-- separated by the optional `delimiter` argument, which defaults to `'\n'`.
+-- generates an error if an opcode is invalid or if not enough bytes remain in
+-- the string to satisfy an instruction's argument.
+function M.decompile(block, delimiter)
     delimiter = delimiter or '\n'
 
     local instructions = {}
@@ -630,6 +629,10 @@ function M.decompile_block(block, delimiter)
         local opcode = string.byte(block, i)
 
         if opcode == 0xcb then
+            if i + 1 > #block then
+                error('no data after prefix cb')
+            end
+
             i = i + 1
             table.insert(instructions, cb_mnemonics[string.byte(block, i)])
         else
@@ -639,12 +642,22 @@ function M.decompile_block(block, delimiter)
             end
 
             if string.find(mnemonic, '%a8') ~= nil then
+                if i + 1 > #block then
+                    error(string.format(
+                        'no data after unary opcode %02x', opcode))
+                end
+
                 i = i + 1
                 local arg = string.byte(block, i)
                 local ins = string.gsub(mnemonic, '%a8',
                     string.format('%02x', arg))
                 table.insert(instructions, ins)
             elseif string.find(mnemonic, '%a16') ~= nil then
+                if i + 2 > #block then
+                    error(string.format(
+                        'insufficient data after binary opcode %02x', opcode))
+                end
+
                 i = i + 1
                 local arg1 = string.byte(block, i)
                 i = i + 1
