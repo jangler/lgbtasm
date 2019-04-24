@@ -57,3 +57,27 @@ assert(s == '\xb8\xc9')
 -- block with invalid instruction
 status = pcall(lgbtasm.compile_line, 'cp b\ninvalid\nret')
 assert(status == false)
+
+-- decompile invalid instruction
+status = pcall(lgbtasm.decompile_block, '\xd3')
+assert(status == false)
+
+-- decompile nullary instruction
+s = lgbtasm.decompile_block('\xaf')
+assert(s == 'xor a')
+
+-- decompile unary instruction
+s = lgbtasm.decompile_block('\x3e\x3f')
+assert(s == 'ld a,3f')
+
+-- decompile binary instruction
+s = lgbtasm.decompile_block('\x21\x92\xc6')
+assert(s == 'ld hl,c692')
+
+-- decompile prefix cb instruction
+s = lgbtasm.decompile_block('\xcb\x67')
+assert(s == 'bit 4,a')
+
+-- decompile block
+s = lgbtasm.decompile_block('\x3e\x3f\xcb\x67\xc9', '; ')
+assert(s == 'ld a,3f; bit 4,a; ret')
