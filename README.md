@@ -1,29 +1,37 @@
 # Lua Game Boy: The Assembler
 
-who even knows what this is
+The good:
 
-the good:
+- Converts assembly to machine code
+- Converts machine code to assembly
+- Lua 5.1 compatible
 
-- converts assembly to machine code
-- converts machine code to assembly
-- lua 5.1 compatible
+The bad:
 
-the bad:
-
-- not very tested
-- has no notion of labels
-- it's only a module and nothing executable
+- Not very tested
+- Has no notion of labels
+- It's only a module and nothing executable
 
 
-## usage
+## Usage
+
+This module uses bgb / no$gmb syntax, although instruction arguments can
+optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
+are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
+`ld 3f` is also valid. Instructions and arguments are case-insensitive.
+
+The characters in `/#;-` all begin inline comments, although instruction
+delimiter status overrides comment character status in the `compile()`
+function.
+
 
 ### `compile(block, delimiters)`
 
-parses a series of instructions and returns the block as a byte string. the
-optional `delimiters` argument determines what characters can separate
-instructions in the input; it defaults to `'\n'`. generates an error if an
-instruction does not match any mnemonic, or if an invalid argument is given
-to an instruction.
+Parses a series of instructions and returns the equivalent machine code as a
+byte string. The optional `delimiters` argument determines what characters
+can separate instructions in the input; it defaults to `'\n'`. Generates an
+error if an instruction does not match any mnemonic, or if an invalid
+argument is given to an instruction.
 
 ```
 > lgbtasm = require 'lgbtasm'
@@ -31,11 +39,12 @@ to an instruction.
 true
 ```
 
+
 ### `decompile(block, delimiters)`
 
-converts a string of machine code into an asm string with instructions
+Converts a string of machine code into an asm string with instructions
 separated by the optional `delimiter` argument, which defaults to `'\n'`.
-generates an error if an opcode is invalid, or if not enough bytes remain in
+Generates an error if an opcode is invalid, or if not enough bytes remain in
 the string to satisfy an instruction's argument.
 
 ```

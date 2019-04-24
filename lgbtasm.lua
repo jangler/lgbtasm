@@ -1,12 +1,13 @@
 local M = {}
 
--- this module uses bgb / no$gmb syntax, although instruction arguments can
--- optionally be prefixed with $. in other words, 'ld a,3f' and 'ld a,$3f' are
--- both acceptable. additionally, 'a,' can be omitted from mnemonics—so 'ld 3f'
--- is also valid. instructions and arguments are case-insensitive.
+-- This module uses bgb / no$gmb syntax, although instruction arguments can
+-- optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
+-- are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
+-- `ld 3f` is also valid. Instructions and arguments are case-insensitive.
 --
--- any non-alphanumeric character not part of the asm syntax is interpreted as
--- the beginning of a comment, and the rest of the line is ignored.
+-- The characters in `/#;-` all begin inline comments, although instruction
+-- delimiter status overrides comment character status in the `compile()`
+-- function.
 
 -- lua tables are 1-indexed, but think of this as a map and not an array. it
 -- can't be iterated over like an array, since it starts at zero and contains
@@ -609,11 +610,11 @@ local function compile_line(line)
     return string.char(compile_line_to_bytes(line))
 end
 
--- parses a series of instructions and returns the block as a byte string. the
--- optional `delimiters` argument determines what characters can separate
--- instructions in the input; it defaults to `'\n'`. generates an error if an
--- instruction does not match any mnemonic, or if an invalid argument is given
--- to an instruction.
+-- Parses a series of instructions and returns the equivalent machine code as a
+-- byte string. The optional `delimiters` argument determines what characters
+-- can separate instructions in the input; it defaults to `'\n'`. Generates an
+-- error if an instruction does not match any mnemonic, or if an invalid
+-- argument is given to an instruction.
 function M.compile(block, delimiters)
     delimiters = delimiters or '\n'
     local pattern = string.format('[^%s]+', delimiters)
@@ -627,9 +628,9 @@ function M.compile(block, delimiters)
     return table.concat(instructions)
 end
 
--- converts a string of machine code into an asm string with instructions
+-- Converts a string of machine code into an asm string with instructions
 -- separated by the optional `delimiter` argument, which defaults to `'\n'`.
--- generates an error if an opcode is invalid, or if not enough bytes remain in
+-- Generates an error if an opcode is invalid, or if not enough bytes remain in
 -- the string to satisfy an instruction's argument.
 function M.decompile(block, delimiter)
     delimiter = delimiter or '\n'
