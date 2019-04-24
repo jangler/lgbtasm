@@ -565,7 +565,7 @@ local function compile_line_to_bytes(line)
     end
 
     -- then try matching after stripping an argument
-    local arg = string.match(line, '.+[ ,]($?%x%x+)')
+    local arg = string.match(line, '.+[ ,(]($?%x%x+)')
     if string.find(line, 'ff00+') ~= nil then
         arg = string.match(line, '%+(%x%x)')
         line = string.gsub(line, '%$', '')

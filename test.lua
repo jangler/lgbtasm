@@ -30,6 +30,10 @@ assert(s == '\x21\x92\xc6')
 s = lgbtasm.compile('ld hl,c692')
 assert(s == '\x21\x92\xc6')
 
+-- instruction involving an address
+s = lgbtasm.compile('ld a,(cc49)')
+assert(s == '\xfa\x49\xcc')
+
 -- prefix cb instruction
 s = lgbtasm.compile('bit 4,a')
 assert(s == '\xcb\x67')
