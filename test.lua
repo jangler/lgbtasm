@@ -66,6 +66,14 @@ assert(s == '\xb8\xc9')
 status = pcall(lgbtasm.compile, 'cp b\ninvalid\nret')
 assert(status == false)
 
+-- forward jump to label
+s = lgbtasm.compile('jr .1; cp a,49; .1')
+assert(s == '\x18\x02\xfe\x49')
+
+-- backward jump to label
+s = lgbtasm.compile('.1; cp a,49; jr .1')
+assert(s == '\xfe\x49\x18\xfe')
+
 -- decompile invalid opcode
 status = pcall(lgbtasm.decompile, '\xd3')
 assert(status == false)
@@ -105,3 +113,11 @@ assert(s == 'ld (ff00+b5),a')
 -- decompile block
 s = lgbtasm.decompile('\x3e\x3f\xcb\x67\xc9', '; ')
 assert(s == 'ld a,3f; bit 4,a; ret')
+
+-- decompile forward jump to label
+s = lgbtasm.compile('\x18\x02\xfe\x49')
+assert(s == 'jr .1; cp b; .1')
+
+-- decompile backward jump to label
+s = lgbtasm.compile('\xfe\x49\x18\xfe', '; ')
+assert(s == '.1; cp b; jr .1')
