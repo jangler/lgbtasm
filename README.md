@@ -4,7 +4,7 @@ who even knows what this is
 
 the good:
 
-- converts single instructions to machine code
+- converts instructions to machine code
 
 the bad:
 
