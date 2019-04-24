@@ -545,9 +545,8 @@ for code, mnemonic in pairs(cb_mnemonics) do
     cb_opcodes[mnemonic] = code
 end
 
--- parses a line and returns its machine code as a series of bytes. nil is
--- returned if the line does not match any mnemonic.
-function M.compile_line(line)
+-- as compile_line, but returns a series of bytes instead of a byte string.
+function compile_line_to_bytes(line)
     line = string.lower(line)
     line = string.sub(line, string.find(line, '%a'), -1) -- strip indent
     line = string.gsub(line, ' a,', ' ')
@@ -592,18 +591,28 @@ function M.compile_line(line)
             end
         end
     end
+
+    error('unknown instruction ' .. line)
+end
+
+-- parses a line and returns its machine code as a byte string. generates an
+-- error if the line does not match any mnemonic, or if an invalid argument is
+-- given to an instruction.
+function M.compile_line(line)
+    return string.char(compile_line_to_bytes(line))
 end
 
 -- parses a series of instructions and returns the entire block as a byte
 -- string. the optional `delimiters` argument determines what characters can
 -- separate instructions in the input; it defaults to the newline character.
+-- propogates errors as returned by `compile_line()`.
 function M.compile_block(block, delimiters)
     delimiters = delimiters or '\n'
     local pattern = string.format('[^%s]+', delimiters)
 
     local instructions = {}
     for line in string.gmatch(block, pattern) do
-        table.insert(instructions, string.char(M.compile_line(line)))
+        table.insert(instructions, M.compile_line(line))
     end
     return table.concat(instructions)
 end
