@@ -13,6 +13,7 @@ The bad:
 
 - Not very tested
 - Has no notion of labels
+- Very limited command language
 - It's only a module and nothing executable
 
 
