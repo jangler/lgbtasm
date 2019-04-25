@@ -11,8 +11,8 @@ local M = {}
 -- function.
 --
 -- "Local" labels (the only kind) start with a `.` and can be referenced by
--- relative jumps. Decompilation automatically generates numbered labels for
--- relative jump destinations.
+-- relative jumps. Decompilation automatically generates labels for relative
+-- jump destinations.
 
 -- lua tables are 1-indexed, but think of this as a map and not an array. it
 -- can't be iterated over like an array, since it starts at zero and contains
@@ -558,7 +558,7 @@ local function strip_line(line)
         line = string.sub(line, 1, comment_index - 1)
     end
 
-    local indent_index = string.find(line, '%a')
+    local indent_index = string.find(line, '[^%s]')
     if indent_index ~= nil then
         line = string.sub(line, indent_index, -1)
     end
@@ -584,7 +584,7 @@ local function compile_db_to_bytes(line)
 end
 
 -- as `compile_line()`, but returns a series of bytes instead of a byte string.
-local function compile_line_to_bytes(line)
+local function compile_line_to_bytes(line, offset, labels)
     line = string.lower(strip_line(line))
 
     -- first try matching against keywords
@@ -597,6 +597,18 @@ local function compile_line_to_bytes(line)
         return opcodes[line]
     elseif cb_opcodes[line] ~= nil then
         return 0xcb, cb_opcodes[line]
+    end
+
+    -- substitute labels
+    local label = string.match(line, '^jr .*,?(%.[%w_]+)')
+    if label ~= nil then
+        local jr_arg = 0
+        if labels ~= nil then
+            jr_arg = labels[label] - offset - 2
+        end
+        jr_arg = jr_arg % 0x100
+
+        line = string.gsub(line, label, string.format('%02x', jr_arg))
     end
 
     -- then try matching after stripping an argument
@@ -631,8 +643,8 @@ local function compile_line_to_bytes(line)
 end
 
 -- as `compile()`, but treats the input as a single instruction.
-local function compile_line(line)
-    return string.char(compile_line_to_bytes(line))
+local function compile_line(line, offset, labels)
+    return string.char(compile_line_to_bytes(line, offset, labels))
 end
 
 -- Parses a series of instructions and returns the equivalent machine code as a
@@ -642,14 +654,37 @@ end
 -- argument is given to an instruction.
 function M.compile(block, delimiters)
     delimiters = delimiters or '\n'
-    local pattern = string.format('[^%s]+', delimiters)
+    local delim_pattern = string.format('[^%s]+', delimiters)
+    local label_pattern = '^%.[%w_]+$'
 
-    local instructions = {}
-    for line in string.gmatch(block, pattern) do
-        if #strip_line(line) > 0 then
-            table.insert(instructions, compile_line(line))
+    -- first pass: determine label offsets
+    local labels = {}
+    local offset = 0
+    for line in string.gmatch(block, delim_pattern) do
+        line = strip_line(line)
+        if #line > 0 then
+            if string.match(line, label_pattern) then
+                labels[line] = offset
+            else
+                offset = offset + #compile_line(line)
+            end
         end
     end
+
+    -- second pass:
+    local instructions = {}
+    local offset = 0
+    for line in string.gmatch(block, delim_pattern) do
+        line = strip_line(line)
+        if #line > 0 then
+            if not string.match(line, label_pattern) then
+                local bytes = compile_line(line, offset, labels)
+                table.insert(instructions, bytes)
+                offset = offset + #bytes
+            end
+        end
+    end
+
     return table.concat(instructions)
 end
 

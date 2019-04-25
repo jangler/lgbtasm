@@ -69,12 +69,12 @@ status = pcall(lgbtasm.compile, 'cp b\ninvalid\nret')
 assert(status == false)
 
 -- forward jump to label
-s = lgbtasm.compile('jr .1; cp a,49; .1')
+s = lgbtasm.compile('jr .next; cp a,49; .next', ';')
 assert(s == '\x18\x02\xfe\x49')
 
 -- backward jump to label
-s = lgbtasm.compile('.1; cp a,49; jr .1')
-assert(s == '\xfe\x49\x18\xfe')
+s = lgbtasm.compile('.loop; cp a,49; jr .loop', ';')
+assert(s == '\xfe\x49\x18\xfc')
 
 
 -- compiling assembler commands:

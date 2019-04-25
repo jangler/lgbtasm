@@ -12,7 +12,6 @@ The good:
 The bad:
 
 - Not very tested
-- Has no notion of labels
 - Very limited command language
 - It's only a module and nothing executable
 
@@ -28,6 +27,10 @@ case-insensitive.
 The characters in `/#;-` all begin inline comments, although instruction
 delimiter status overrides comment character status in the `compile()`
 function.
+
+"Local" labels (the only kind) start with a `.` and can be referenced by
+relative jumps. Decompilation automatically generates labels for relative
+jump destinations.
 
 
 ## Functions
