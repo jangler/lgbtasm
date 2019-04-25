@@ -3,7 +3,8 @@ local M = {}
 -- This module uses bgb / no$gmb syntax, although instruction arguments can
 -- optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
 -- are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
--- `ld 3f` is also valid. Instructions and arguments are case-insensitive.
+-- `ld 3f` is also valid. Instructions, arguments, and keywords are
+-- case-insensitive.
 --
 -- The characters in `/#;-` all begin inline comments, although instruction
 -- delimiter status overrides comment character status in the `compile()`
@@ -563,7 +564,7 @@ local function strip_line(line)
     return line
 end
 
--- compiles a `db` command.
+-- Defines a sequence of comma-separated byte literals.
 local function compile_db_to_bytes(line)
     local bytes = {}
 

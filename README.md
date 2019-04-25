@@ -21,16 +21,17 @@ The bad:
 This module uses bgb / no$gmb syntax, although instruction arguments can
 optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
 are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
-`ld 3f` is also valid. Instructions and arguments are case-insensitive.
+`ld 3f` is also valid. Instructions, arguments, and keywords are
+case-insensitive.
 
 The characters in `/#;-` all begin inline comments, although instruction
 delimiter status overrides comment character status in the `compile()`
 function.
 
 
-### Functions
+## Functions
 
-#### `compile(block, delimiters)`
+### `compile(block, delimiters)`
 
 Parses a series of instructions and returns the equivalent machine code as a
 byte string. The optional `delimiters` argument determines what characters
@@ -44,7 +45,7 @@ argument is given to an instruction.
 true
 ```
 
-#### `decompile(block, delimiters)`
+### `decompile(block, delimiters)`
 
 Converts a string of machine code into an asm string with instructions
 separated by the optional `delimiter` argument, which defaults to `'\n'`.
@@ -58,13 +59,13 @@ cp b; ret
 ```
 
 
-### Commands
+## Commands
 
 The following syntax is represented in bastardized EBNF.
 
-#### `db d8{,d8}`
+### `db d8{,d8}`
 
-Defines a sequence of byte literals.
+Defines a sequence of comma-separated byte literals.
 
 ```
 > lgbtasm = require 'lgbtasm'
