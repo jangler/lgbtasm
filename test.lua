@@ -2,6 +2,8 @@
 
 lgbtasm = require '.../lgbtasm'
 
+-- compiling instructions:
+
 -- invalid instruction
 status = pcall(lgbtasm.compile, 'invalid')
 assert(status == false)
@@ -65,6 +67,24 @@ assert(s == '\xb8\xc9')
 -- block with invalid instruction
 status = pcall(lgbtasm.compile, 'cp b\ninvalid\nret')
 assert(status == false)
+
+
+-- compiling assembler commands:
+
+-- invalid db
+status = pcall(lgbtasm.compile, 'db')
+assert(status == false)
+
+-- single-entry db
+s = lgbtasm.compile('db 1a')
+assert(s == '\x1a')
+
+-- multiple-entry db w/ inconsistent formatting
+s = lgbtasm.compile('db 1a,$2b, 3c')
+assert(s == '\x1a\x2b\x3c')
+
+
+-- decompiling:
 
 -- decompile invalid opcode
 status = pcall(lgbtasm.decompile, '\xd3')

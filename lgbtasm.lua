@@ -563,9 +563,29 @@ local function strip_line(line)
     return line
 end
 
+-- compiles a `db` command.
+local function compile_db_to_bytes(line)
+    local bytes = {}
+
+    for entry in string.gmatch(line, '[ ,]$?(%x%x)') do
+        table.insert(bytes, tonumber(entry, 16))
+    end
+
+    if #bytes == 0 then
+        error('no valid arguments to db: ' .. line)
+    end
+
+    return unpack(bytes)
+end
+
 -- as `compile_line()`, but returns a series of bytes instead of a byte string.
 local function compile_line_to_bytes(line)
     line = string.lower(strip_line(line))
+
+    -- first try matching against keywords
+    if string.match(line, '^db') then
+        return compile_db_to_bytes(line)
+    end
 
     -- first try raw match (works for nullary instructions)
     if opcodes[line] ~= nil then

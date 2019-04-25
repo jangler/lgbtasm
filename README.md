@@ -28,7 +28,9 @@ delimiter status overrides comment character status in the `compile()`
 function.
 
 
-### `compile(block, delimiters)`
+### Functions
+
+#### `compile(block, delimiters)`
 
 Parses a series of instructions and returns the equivalent machine code as a
 byte string. The optional `delimiters` argument determines what characters
@@ -42,8 +44,7 @@ argument is given to an instruction.
 true
 ```
 
-
-### `decompile(block, delimiters)`
+#### `decompile(block, delimiters)`
 
 Converts a string of machine code into an asm string with instructions
 separated by the optional `delimiter` argument, which defaults to `'\n'`.
@@ -54,4 +55,19 @@ the string to satisfy an instruction's argument.
 > lgbtasm = require 'lgbtasm'
 > lgbtasm.decompile('\xb8\xc9', '; ')
 cp b; ret
+```
+
+
+### Commands
+
+The following syntax is represented in bastardized EBNF.
+
+#### `db d8{,d8}`
+
+Defines a sequence of byte literals.
+
+```
+> lgbtasm = require 'lgbtasm'
+> lgbtasm.compile('db 01,02') == '\x01\x02'
+true
 ```
