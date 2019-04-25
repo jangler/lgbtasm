@@ -46,7 +46,7 @@ argument is given to an instruction.
 true
 ```
 
-### `decompile(block, delimiters)`
+### `decompile(block, delimiter)`
 
 Converts a string of machine code into an asm string with instructions
 separated by the optional `delimiter` argument, which defaults to `'\n'`.
