@@ -688,6 +688,65 @@ function M.compile(block, delimiters)
     return table.concat(instructions)
 end
 
+-- reads a single instruction from a block of machine code at the given index.
+-- returns the instruction as a mnemonic, and the new index. if `labels` is
+-- given, matching labels are used for jr instructions.
+local function read_instruction(block, i, labels)
+    local opcode = string.byte(block, i)
+
+    if opcode == 0xcb then
+        if i + 1 > #block then
+            error('no data after prefix cb')
+        end
+
+        return cb_mnemonics[string.byte(block, i + 1)], i + 2
+    else
+        local mnemonic = mnemonics[opcode]
+        if mnemonic == nil then
+            error(string.format('invalid opcode: %02x', opcode))
+        end
+
+        if string.find(mnemonic, '%a8') ~= nil then
+            if i + 1 > #block then
+                error(string.format(
+                    'no data after unary opcode %02x', opcode))
+            end
+
+            local arg = string.byte(block, i + 1)
+            local ins = string.gsub(mnemonic, '%a8',
+                string.format('%02x', arg))
+
+            -- substitute labels for jr if possible
+            if labels ~= nil and string.match(mnemonic, '^jr') then
+                local jr_dest = arg + i + 1
+                if arg >= 0x80 then
+                    jr_dest = arg + i - 0xff
+                end
+
+                local label = labels[jr_dest]
+                if label ~= nil then
+                    ins = string.gsub(mnemonic, '%a8', label)
+                end
+            end
+
+            return ins, i + 2
+        elseif string.find(mnemonic, '%a16') ~= nil then
+            if i + 2 > #block then
+                error(string.format(
+                    'insufficient data after binary opcode %02x', opcode))
+            end
+
+            local arg1 = string.byte(block, i + 1)
+            local arg2 = string.byte(block, i + 2)
+            local ins = string.gsub(mnemonic, '%a16',
+                string.format('%04x', arg1 + arg2 * 0x100))
+            return ins, i + 3
+        else
+            return mnemonic, i + 1
+        end
+    end
+end
+
 -- Converts a string of machine code into an asm string with instructions
 -- separated by the optional `delimiter` argument, which defaults to `'\n'`.
 -- Generates an error if an opcode is invalid, or if not enough bytes remain in
@@ -695,57 +754,54 @@ end
 function M.decompile(block, delimiter)
     delimiter = delimiter or '\n'
 
-    local instructions = {}
+    -- first pass: determine label offsets
+    local labels = {}
     local i = 1
     while i <= #block do
         local opcode = string.byte(block, i)
+        if string.match(mnemonics[opcode], '^jr ') then
+            local arg = string.byte(block, i + 1)
 
-        if opcode == 0xcb then
-            if i + 1 > #block then
-                error('no data after prefix cb')
-            end
-
-            i = i + 1
-            table.insert(instructions, cb_mnemonics[string.byte(block, i)])
-        else
-            local mnemonic = mnemonics[opcode]
-            if mnemonic == nil then
-                error(string.format('invalid opcode: %02x', opcode))
-            end
-
-            if string.find(mnemonic, '%a8') ~= nil then
-                if i + 1 > #block then
-                    error(string.format(
-                        'no data after unary opcode %02x', opcode))
-                end
-
-                i = i + 1
-                local arg = string.byte(block, i)
-                local ins = string.gsub(mnemonic, '%a8',
-                    string.format('%02x', arg))
-                table.insert(instructions, ins)
-            elseif string.find(mnemonic, '%a16') ~= nil then
-                if i + 2 > #block then
-                    error(string.format(
-                        'insufficient data after binary opcode %02x', opcode))
-                end
-
-                i = i + 1
-                local arg1 = string.byte(block, i)
-                i = i + 1
-                local arg2 = string.byte(block, i)
-                local ins = string.gsub(mnemonic, '%a16',
-                    string.format('%04x', arg1 + arg2 * 0x100))
-                table.insert(instructions, ins)
+            if arg < 0x80 then
+                labels[arg + i + 1] = '.next'
             else
-                table.insert(instructions, mnemonic)
+                labels[arg + i - 0xff] = '.loop'
             end
         end
 
-        i = i + 1
+        _, i = read_instruction(block, i)
     end
 
-    return table.concat(instructions, delimiter)
+    -- number labels
+    local prefix_counts = {}
+    for i = 0, #block - 1 do
+        local label = labels[i]
+        if label ~= nil then
+            if prefix_counts[label] == nil then
+                prefix_counts[label] = 0
+            else
+                labels[i] = string.format(
+                    '%s%d', label, prefix_counts[label] + 1)
+            end
+
+            prefix_counts[label] = prefix_counts[label] + 1
+        end
+    end
+
+    -- second pass:
+    local lines = {}
+    local i = 1
+    while i <= #block do
+        if labels[i - 1] ~= nil then
+            table.insert(lines, labels[i - 1])
+        end
+
+        local ins = nil
+        ins, i = read_instruction(block, i, labels)
+        table.insert(lines, ins)
+    end
+
+    return table.concat(lines, delimiter)
 end
 
 return M

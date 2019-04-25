@@ -76,6 +76,23 @@ assert(s == '\x18\x02\xfe\x49')
 s = lgbtasm.compile('.loop; cp a,49; jr .loop', ';')
 assert(s == '\xfe\x49\x18\xfc')
 
+-- multiple labels
+s = lgbtasm.compile([[.loop
+ld a,a
+jr .next
+.loop2
+ld a,b
+jr .next2
+ld a,c
+jr .next
+.next
+ld a,d
+jr .loop2
+.next2
+ld a,e
+jr .loop]])
+assert(s == '\x7f\x18\x06\x78\x18\x06\x79\x18\x00\x7a\x18\xf7\x7b\x18\xf1')
+
 
 -- compiling assembler commands:
 
@@ -135,9 +152,27 @@ s = lgbtasm.decompile('\x3e\x3f\xcb\x67\xc9', '; ')
 assert(s == 'ld a,3f; bit 4,a; ret')
 
 -- decompile forward jump to label
-s = lgbtasm.compile('\x18\x02\xfe\x49')
-assert(s == 'jr .1; cp b; .1')
+s = lgbtasm.decompile('\x18\x02\xfe\x49\xc9', '; ')
+assert(s == 'jr .next; cp a,49; .next; ret')
 
 -- decompile backward jump to label
-s = lgbtasm.compile('\xfe\x49\x18\xfe', '; ')
-assert(s == '.1; cp b; jr .1')
+s = lgbtasm.decompile('\xfe\x49\x18\xfc', '; ')
+assert(s == '.loop; cp a,49; jr .loop')
+
+-- decompile multiple labels
+s = lgbtasm.decompile(
+    '\x7f\x18\x06\x78\x18\x06\x79\x18\x00\x7a\x18\xf7\x7b\x18\xf1')
+assert(s == [[.loop
+ld a,a
+jr .next
+.loop2
+ld a,b
+jr .next2
+ld a,c
+jr .next
+.next
+ld a,d
+jr .loop2
+.next2
+ld a,e
+jr .loop]])
