@@ -21,7 +21,7 @@ The bad:
 This module uses bgb / no$gmb syntax, although instruction arguments can
 optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
 are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
-`ld 3f` is also valid. Instructions, arguments, and keywords are
+`ld 3f` is also valid. Instructions, arguments, keywords, and labels are
 case-insensitive.
 
 The characters in `/#;-` all begin inline comments, although instruction
