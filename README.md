@@ -13,6 +13,7 @@ The bad:
 
 - Not very tested
 - Has no notion of labels
+- Very limited command language
 - It's only a module and nothing executable
 
 
@@ -21,12 +22,15 @@ The bad:
 This module uses bgb / no$gmb syntax, although instruction arguments can
 optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
 are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
-`ld 3f` is also valid. Instructions and arguments are case-insensitive.
+`ld 3f` is also valid. Instructions, arguments, and keywords are
+case-insensitive.
 
 The characters in `/#;-` all begin inline comments, although instruction
 delimiter status overrides comment character status in the `compile()`
 function.
 
+
+## Functions
 
 ### `compile(block, delimiters)`
 
@@ -42,8 +46,7 @@ argument is given to an instruction.
 true
 ```
 
-
-### `decompile(block, delimiters)`
+### `decompile(block, delimiter)`
 
 Converts a string of machine code into an asm string with instructions
 separated by the optional `delimiter` argument, which defaults to `'\n'`.
@@ -54,4 +57,19 @@ the string to satisfy an instruction's argument.
 > lgbtasm = require 'lgbtasm'
 > lgbtasm.decompile('\xb8\xc9', '; ')
 cp b; ret
+```
+
+
+## Commands
+
+The following syntax is represented in bastardized EBNF.
+
+### `db d8{,d8}`
+
+Defines a sequence of comma-separated byte literals.
+
+```
+> lgbtasm = require 'lgbtasm'
+> lgbtasm.compile('db 01,02') == '\x01\x02'
+true
 ```

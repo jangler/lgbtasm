@@ -3,7 +3,8 @@ local M = {}
 -- This module uses bgb / no$gmb syntax, although instruction arguments can
 -- optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
 -- are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
--- `ld 3f` is also valid. Instructions and arguments are case-insensitive.
+-- `ld 3f` is also valid. Instructions, arguments, and keywords are
+-- case-insensitive.
 --
 -- The characters in `/#;-` all begin inline comments, although instruction
 -- delimiter status overrides comment character status in the `compile()`
@@ -215,7 +216,7 @@ local mnemonics = {
     'call nz,a16',    -- c4
     'push bc',        -- c5
     'add a,d8',       -- c6
-    'rst 00h',        -- c7
+    'rst 00',         -- c7
     'ret z',          -- c8
     'ret',            -- c9
     'jp z,a16',       -- ca
@@ -223,7 +224,7 @@ local mnemonics = {
     'call z,a16',     -- cc
     'call a16',       -- cd
     'adc a,d8',       -- ce
-    'rst 08h',        -- cf
+    'rst 08',         -- cf
     'ret nc',         -- d0
     'pop de',         -- d1
     'jp nc,a16',      -- d2
@@ -231,7 +232,7 @@ local mnemonics = {
     'call nc,a16',    -- d4
     'push de',        -- d5
     'sub a,d8',       -- d6
-    'rst 10h',        -- d7
+    'rst 10',         -- d7
     'ret c',          -- d8
     'reti',           -- d9
     'jp c,a16',       -- da
@@ -239,7 +240,7 @@ local mnemonics = {
     'call c,a16',     -- dc
     nil,              -- dd
     'sbc a,d8',       -- de
-    'rst 18h',        -- df
+    'rst 18',         -- df
     'ld (ff00+a8),a', -- e0
     'pop hl',         -- e1
     'ld (ff00+c),a',  -- e2
@@ -247,7 +248,7 @@ local mnemonics = {
     nil,              -- e4
     'push hl',        -- e5
     'and a,d8',       -- e6
-    'rst 20h',        -- e7
+    'rst 20',         -- e7
     'add sp,r8',      -- e8
     'jp (hl)',        -- e9
     'ld (a16),a',     -- ea
@@ -255,7 +256,7 @@ local mnemonics = {
     nil,              -- ec
     nil,              -- ed
     'xor a,d8',       -- ee
-    'rst 28h',        -- ef
+    'rst 28',         -- ef
     'ld a,(ff00+a8)', -- f0
     'pop af',         -- f1
     'ld a,(ff00+c)',  -- f2
@@ -263,7 +264,7 @@ local mnemonics = {
     nil,              -- f4
     'push af',        -- f5
     'or a,d8',        -- f6
-    'rst 30h',        -- f7
+    'rst 30',         -- f7
     'ld hl,sp+r8',    -- f8
     'ld sp,hl',       -- f9
     'ld a,(a16)',     -- fa
@@ -271,7 +272,7 @@ local mnemonics = {
     nil,              -- fc
     nil,              -- fd
     'cp a,d8',        -- fe
-    'rst 38h',        -- ff
+    'rst 38',         -- ff
 }
 mnemonics[0] = 'nop'
 
@@ -567,9 +568,29 @@ local function strip_line(line)
     return line
 end
 
+-- Defines a sequence of comma-separated byte literals.
+local function compile_db_to_bytes(line)
+    local bytes = {}
+
+    for entry in string.gmatch(line, '[ ,]$?(%x%x)') do
+        table.insert(bytes, tonumber(entry, 16))
+    end
+
+    if #bytes == 0 then
+        error('no valid arguments to db: ' .. line)
+    end
+
+    return unpack(bytes)
+end
+
 -- as `compile_line()`, but returns a series of bytes instead of a byte string.
 local function compile_line_to_bytes(line)
     line = string.lower(strip_line(line))
+
+    -- first try matching against keywords
+    if string.match(line, '^db') then
+        return compile_db_to_bytes(line)
+    end
 
     -- first try raw match (works for nullary instructions)
     if opcodes[line] ~= nil then
