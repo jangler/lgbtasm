@@ -1,12 +1,12 @@
 local M = {}
 
--- This module uses bgb / no$gmb syntax, although instruction arguments can
--- optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
--- are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
--- `ld 3f` is also valid. Instructions, arguments, keywords, and labels are
--- case-insensitive.
+-- This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
+-- always undecorated (no `$`, etc.) and hexadecimal, `a,` is always required
+-- in mnemonics that feature it, and all keywords and digits are lower-case.
+-- User-defined symbols such as labels are case-sensitive. A label and
+-- instruction cannot appear on the same line.
 --
--- The characters in `/#;-` all begin inline comments, although instruction
+-- The characters in `;*#` all begin inline comments, although instruction
 -- delimiter status overrides comment character status in the `compile()`
 -- function.
 --
@@ -536,35 +536,40 @@ local cb_mnemonics = {
 }
 cb_mnemonics[0] = 'rlc b'
 
--- create opcode lookup tables from mnemonics
-local opcodes = {}
-for code, mnemonic in pairs(mnemonics) do
-    mnemonic = string.gsub(mnemonic, '%a8', '')
-    mnemonic = string.gsub(mnemonic, '%a16', '')
-    mnemonic = string.gsub(mnemonic, ' a,', ' ')
-    opcodes[mnemonic] = code
+-- create opcode lookup tables from mnemonics.
+-- entries in the table have the fields:
+-- - 'opcode': uint8 code of the instruction
+-- - 'pindex': index of the mnemonic's parameter (or nil)
+-- - 'arity': number of bytes of arguments the instruction takes
+-- keys have the argument metavariable stripped from the mnemonic.
+local ops = {}
+
+for opcode, mnemonic in pairs(mnemonics) do
+    local arg8 = string.find(mnemonic, '%a8')
+    local arg16 = string.find(mnemonic, '%a16')
+    mnemonic = string.gsub(mnemonic, '%a[816]+', '')
+
+    if arg8 then
+        ops[mnemonic] = {opcode = opcode, pindex = arg8, arity = 1}
+    elseif arg16 then
+        ops[mnemonic] = {opcode = opcode, pindex = arg16, arity = 2}
+    else
+        ops[mnemonic] = {opcode = opcode, pindex = nil, arity = 0}
+    end
 end
 
--- same for cb prefix
+-- cb prefix opcodes work slightly differently. the table entries are
+-- opcode-only, since all cb instructions are two bytes and take no arguments.
 local cb_opcodes = {}
+
 for code, mnemonic in pairs(cb_mnemonics) do
     cb_opcodes[mnemonic] = code
 end
 
--- strips comment, indent, and optional 'a,' from line.
+-- strips indent and comment from line, if present.
 local function strip_line(line)
-    local comment_index = string.find(line, ' *[/#;-]')
-    if comment_index ~= nil then
-        line = string.sub(line, 1, comment_index - 1)
-    end
-
-    local indent_index = string.find(line, '[^%s]')
-    if indent_index ~= nil then
-        line = string.sub(line, indent_index, -1)
-    end
-
-    line = string.gsub(line, ' a,', ' ')
-
+    line = string.gsub(line, '^%s+', '') -- indent
+    line = string.gsub(line, '%s*[;*#].*', '') -- comment
     return line
 end
 
@@ -583,63 +588,76 @@ local function compile_db_to_bytes(line)
     return unpack(bytes)
 end
 
+-- as `compile_line_to_bytes()`, but with a preidentified operation and string
+-- argument.
+local function compile_op_with_arg(line, op, word, offset, labels)
+    -- labels are already numbers (or should be)
+    local arg = tonumber(word, 16)
+    if labels and labels[word] then
+        arg = labels[word]
+
+        -- adjust for relative jump addresses
+        if string.match(line, '^jr') then
+            arg = (arg - offset - 2) % 0x100
+        end
+    end
+
+    -- no label table = first pass; use placeholder zero
+    if not arg then
+        if labels then
+            error(line .. ': symbol not found: ' .. word)
+        else
+            arg = 0
+        end
+    end
+
+    -- make sure argument is in a valid range for the instruction
+    if arg < 0 or arg >= math.pow(2, op.arity * 8) then
+        error(line .. ': invalid argument: ' .. arg)
+    end
+
+    -- return appropriate number of bytes
+    if op.arity == 1 then
+        return op.opcode, arg
+    else
+        return op.opcode, arg % 0x100, math.floor(arg / 0x100)
+    end
+end
+
 -- as `compile_line()`, but returns a series of bytes instead of a byte string.
 local function compile_line_to_bytes(line, offset, labels)
-    line = string.lower(strip_line(line))
+    line = strip_line(line)
 
     -- first try matching against keywords
     if string.match(line, '^db') then
         return compile_db_to_bytes(line)
     end
 
-    -- first try raw match (works for nullary instructions)
-    if opcodes[line] ~= nil then
-        return opcodes[line]
+    -- then try raw index (works against nullary instructions)
+    if ops[line] then
+        return ops[line].opcode
     elseif cb_opcodes[line] ~= nil then
         return 0xcb, cb_opcodes[line]
     end
 
-    -- substitute labels
-    local label = string.match(line, '^jr .*,?(%.[%w_]+)')
-    if label ~= nil then
-        local jr_arg = 0
-        if labels ~= nil then
-            jr_arg = labels[label] - offset - 2
+    -- try indexing after stripping each successive word from input.
+    -- for example, 'ld (de),16' -> ' (de),16', 'ld (),16', 'ld (de),'.
+    local index = 1
+    for word in string.gmatch(line, '[%w_.]+') do
+        index = string.find(line, word, index)
+
+        local stripped_line = (
+            string.sub(line, 1, index - 1) .. string.sub(line, index + #word))
+
+        local op = ops[stripped_line]
+        if op and index == op.pindex then
+            return compile_op_with_arg(line, op, word, offset, labels)
         end
-        jr_arg = jr_arg % 0x100
 
-        line = string.gsub(line, label, string.format('%02x', jr_arg))
+        index = index + 1 -- don't match the same location twice
     end
 
-    -- then try matching after stripping an argument
-    local arg = string.match(line, '.+[ ,(]($?%x%x+)')
-    if string.find(line, 'ff00+') ~= nil then
-        arg = string.match(line, '%+(%x%x)')
-        line = string.gsub(line, '%$', '')
-    end
-
-    if arg ~= nil then
-        line = string.gsub(line, arg, '')
-        local code = opcodes[line]
-
-        if code ~= nil then
-            arg = string.gsub(arg, '%$', '')
-
-            if tonumber(arg, 16) == nil then
-                return code
-            elseif #arg == 2 then
-                return code, tonumber(arg, 16)
-            elseif #arg == 4 then
-                return code, tonumber(arg, 16) % 0x100,
-                    math.floor(tonumber(arg, 16) / 0x100)
-            else
-                -- should be unreachable if patterns are correct
-                error('bad argument for instruction ' .. line)
-            end
-        end
-    end
-
-    error('unknown instruction ' .. line)
+    error(line .. ': unknown operation')
 end
 
 -- as `compile()`, but treats the input as a single instruction.
@@ -664,7 +682,7 @@ function M.compile(block, delimiters)
         line = strip_line(line)
         if #line > 0 then
             if string.match(line, label_pattern) then
-                labels[string.lower(line)] = offset
+                labels[line] = offset
             else
                 offset = offset + #compile_line(line)
             end

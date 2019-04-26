@@ -18,13 +18,13 @@ The bad:
 
 ## Usage
 
-This module uses bgb / no$gmb syntax, although instruction arguments can
-optionally be prefixed with `$`. In other words, `ld a,3f` and `ld a,$3f`
-are both acceptable. Additionally, `a,` can be omitted from mnemonics—so
-`ld 3f` is also valid. Instructions, arguments, keywords, and labels are
-case-insensitive.
+This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
+always undecorated (no `$`, etc.) and hexadecimal, `a,` is always required
+in mnemonics that feature it, and all keywords and digits are lower-case.
+User-defined symbols such as labels are case-sensitive. A label and
+instruction cannot appear on the same line.
 
-The characters in `/#;-` all begin inline comments, although instruction
+The characters in `;*#` all begin inline comments, although instruction
 delimiter status overrides comment character status in the `compile()`
 function.
 
