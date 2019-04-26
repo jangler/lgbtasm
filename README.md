@@ -18,7 +18,7 @@ The bad:
 
 ## Usage
 
-This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
+This module uses bgb/no$gmb syntax and enforces a strict style: numbers are
 undecorated (no `$`, etc.) and hexadecimal, `a,` is required in mnemonics
 that feature it, spaces do not appear after `,`s, parens are used for
 "dereferencing" memory, and all keywords are lower-case. User-defined
@@ -57,7 +57,7 @@ true
 true
 ```
 
-### `decompile(block, delimiter)`
+### `decompile(block, opts)`
 
 Converts a string of machine code into an asm string. Generates an error if
 an opcode is invalid, or if not enough bytes remain in the string to satisfy

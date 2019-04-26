@@ -1,6 +1,6 @@
 local M = {}
 
--- This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
+-- This module uses bgb/no$gmb syntax and enforces a strict style: numbers are
 -- undecorated (no `$`, etc.) and hexadecimal, `a,` is required in mnemonics
 -- that feature it, spaces do not appear after `,`s, parens are used for
 -- "dereferencing" memory, and all keywords are lower-case. User-defined
