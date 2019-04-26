@@ -1,10 +1,10 @@
 local M = {}
 
 -- This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
--- always undecorated (no `$`, etc.) and hexadecimal, `a,` is always required
--- in mnemonics that feature it, and all keywords and digits are lower-case.
--- User-defined symbols such as labels are case-sensitive. A label and
--- instruction cannot appear on the same line.
+-- undecorated (no `$`, etc.) and hexadecimal, `a,` is required in mnemonics
+-- that feature it, spaces do not appear after `,`s, and all keywords are
+-- lower-case. User-defined symbols such as labels are case-sensitive. A label
+-- and instruction cannot appear on the same line.
 --
 -- The characters in `;*#` all begin inline comments, although instruction
 -- delimiter status overrides comment character status in the `compile()`
@@ -577,12 +577,16 @@ end
 local function compile_db_to_bytes(line)
     local bytes = {}
 
-    for entry in string.gmatch(line, '[ ,]$?(%x%x)') do
+    local arg_string = string.sub(line, 4) -- strip '^db '
+    for entry in string.gmatch(arg_string, '[^,]+') do
+        if not string.match(entry, '^%x%x$') then
+            error(line .. ': invalid argument: ' .. entry)
+        end
         table.insert(bytes, tonumber(entry, 16))
     end
 
     if #bytes == 0 then
-        error('no valid arguments to db: ' .. line)
+        error(line .. ': missing argument')
     end
 
     return unpack(bytes)

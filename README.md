@@ -19,10 +19,10 @@ The bad:
 ## Usage
 
 This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
-always undecorated (no `$`, etc.) and hexadecimal, `a,` is always required
-in mnemonics that feature it, and all keywords and digits are lower-case.
-User-defined symbols such as labels are case-sensitive. A label and
-instruction cannot appear on the same line.
+undecorated (no `$`, etc.) and hexadecimal, `a,` is required in mnemonics
+that feature it, spaces do not appear after `,`s, and all keywords are
+lower-case. User-defined symbols such as labels are case-sensitive. A label
+and instruction cannot appear on the same line.
 
 The characters in `;*#` all begin inline comments, although instruction
 delimiter status overrides comment character status in the `compile()`

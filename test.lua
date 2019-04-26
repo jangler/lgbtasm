@@ -7,15 +7,15 @@ lgbtasm = require '.../lgbtasm'
 
 -- unknown operation
 status, err = pcall(lgbtasm.compile, 'unknown')
-assert(status == false and string.find(err, 'unknown operation'))
+assert(status == false and string.match(err, 'unknown operation'))
 
 -- symbol not found
 status, err = pcall(lgbtasm.compile, 'ld a,x')
-assert(status == false and string.find(err, 'symbol not found'))
+assert(status == false and string.match(err, 'symbol not found'))
 
 -- 16-bit arg for 8-bit instruction
 status, err = pcall(lgbtasm.compile, 'ld a,c692')
-assert(status == false and string.find(err, 'invalid argument'))
+assert(status == false and string.match(err, 'invalid argument'))
 
 
 -- compiling valid asm:
@@ -92,16 +92,20 @@ assert(s == '\x7f\x18\x06\x78\x18\x06\x79\x18\x00\x7a\x18\xf7\x7b\x18\xf1')
 
 -- compiling assembler commands:
 
--- invalid db
-status = pcall(lgbtasm.compile, 'db')
-assert(status == false)
+-- db with no arguments
+status, err = pcall(lgbtasm.compile, 'db')
+assert(status == false and string.match(err, 'missing argument'))
+
+-- db with invalid syntax
+status, err = pcall(lgbtasm.compile, 'db 01, $02')
+assert(status == false and string.match(err, 'invalid argument'))
 
 -- single-entry db
 s = lgbtasm.compile('db 1a')
 assert(s == '\x1a')
 
--- multiple-entry db w/ inconsistent formatting
-s = lgbtasm.compile('db 1a,$2b, 3c')
+-- multiple-entry db
+s = lgbtasm.compile('db 1a,2b,3c')
 assert(s == '\x1a\x2b\x3c')
 
 
