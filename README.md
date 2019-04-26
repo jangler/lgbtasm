@@ -59,15 +59,22 @@ true
 
 ### `decompile(block, delimiter)`
 
-Converts a string of machine code into an asm string with instructions
-separated by the optional `delimiter` argument, which defaults to `'\n'`.
-Generates an error if an opcode is invalid, or if not enough bytes remain in
-the string to satisfy an instruction's argument.
+Converts a string of machine code into an asm string. Generates an error if
+an opcode is invalid, or if not enough bytes remain in the string to satisfy
+an instruction's argument. The optional `opts` table can have the fields:
+
+- `delim`, a sequence of characters that separates instructions in the
+  output (default `'\n'`).
+- `defs`, a table of string -> number mappings as if constructed by a series
+  of `define` commands. 16-bit values that unambiguously match an entry will
+  use the corresponding symbol.
 
 ```
 > lgbtasm = require 'lgbtasm'
-> lgbtasm.decompile('\xb8\xc9', '; ')
+> lgbtasm.decompile('\xb8\xc9', {delim = '; '})
 cp b; ret
+> lgbtasm.decompile('\xfa\xc5\xc6', {defs = {x = 0xc6c5}})
+ld a,(x)
 ```
 
 

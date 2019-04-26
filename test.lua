@@ -188,16 +188,20 @@ s = lgbtasm.decompile('\xe0\xb5')
 assert(s == 'ld (ff00+b5),a')
 
 -- decompile block
-s = lgbtasm.decompile('\x3e\x3f\xcb\x67\xc9', '; ')
+s = lgbtasm.decompile('\x3e\x3f\xcb\x67\xc9')
+assert(s == 'ld a,3f\nbit 4,a\nret')
+
+-- decompile block with semicolon delimiter
+s = lgbtasm.decompile('\x3e\x3f\xcb\x67\xc9', {delim = '; '})
 assert(s == 'ld a,3f; bit 4,a; ret')
 
 -- decompile forward jump to label
-s = lgbtasm.decompile('\x18\x02\xfe\x49\xc9', '; ')
-assert(s == 'jr .next; cp a,49; .next; ret')
+s = lgbtasm.decompile('\x18\x02\xfe\x49\xc9')
+assert(s == 'jr .next\ncp a,49\n.next\nret')
 
 -- decompile backward jump to label
-s = lgbtasm.decompile('\xfe\x49\x18\xfc', '; ')
-assert(s == '.loop; cp a,49; jr .loop')
+s = lgbtasm.decompile('\xfe\x49\x18\xfc')
+assert(s == '.loop\ncp a,49\njr .loop')
 
 -- decompile multiple labels
 s = lgbtasm.decompile(
@@ -216,3 +220,8 @@ jr .loop2
 .next2
 ld a,e
 jr .loop]])
+
+-- decompile with defs
+s = lgbtasm.decompile(
+    '\x3e\x01\x21\x01\x00\x21\x02\x00', {defs = {x = 1, y = 2, z = 2}})
+assert(s == 'ld a,01\nld hl,x\nld hl,0002')

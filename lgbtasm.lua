@@ -752,7 +752,7 @@ end
 -- reads a single instruction from a block of machine code at the given index.
 -- returns the instruction as a mnemonic, and the new index. if `labels` is
 -- given, matching labels are used for jr instructions.
-local function read_instruction(block, i, labels)
+local function read_instruction(block, i, labels, defs)
     local opcode = string.byte(block, i)
 
     if opcode == 0xcb then
@@ -799,8 +799,15 @@ local function read_instruction(block, i, labels)
 
             local arg1 = string.byte(block, i + 1)
             local arg2 = string.byte(block, i + 2)
+            local arg = arg1 + arg2 * 0x100
             local ins = string.gsub(mnemonic, '%a16',
-                string.format('%04x', arg1 + arg2 * 0x100))
+                string.format('%04x', arg))
+
+            -- substitute def for 16-bit values if possible
+            if defs and defs[arg] then
+                ins = string.gsub(mnemonic, '%a16', defs[arg])
+            end
+
             return ins, i + 3
         else
             return mnemonic, i + 1
@@ -808,12 +815,17 @@ local function read_instruction(block, i, labels)
     end
 end
 
--- Converts a string of machine code into an asm string with instructions
--- separated by the optional `delimiter` argument, which defaults to `'\n'`.
--- Generates an error if an opcode is invalid, or if not enough bytes remain in
--- the string to satisfy an instruction's argument.
-function M.decompile(block, delimiter)
-    delimiter = delimiter or '\n'
+-- Converts a string of machine code into an asm string. Generates an error if
+-- an opcode is invalid, or if not enough bytes remain in the string to satisfy
+-- an instruction's argument. The optional `opts` table can have the fields:
+--
+-- - `delim`, a sequence of characters that separates instructions in the
+--   output (default `'\n'`).
+-- - `defs`, a table of string -> number mappings as if constructed by a series
+--   of `define` commands. 16-bit values that unambiguously match an entry will
+--   use the corresponding symbol.
+function M.decompile(block, opts)
+    opts = opts or {}
 
     -- first pass: determine label offsets
     local labels = {}
@@ -853,6 +865,20 @@ function M.decompile(block, delimiter)
         end
     end
 
+    -- make reverse lookup table for defines
+    local duplicate_values = {}
+    local reverse_defs = {}
+    for symbol, value in pairs(opts.defs or {}) do
+        if not duplicate_values[value] then
+            if reverse_defs[value] then
+                duplicate_values[value] = true
+                reverse_defs[value] = nil
+            else
+                reverse_defs[value] = symbol
+            end
+        end
+    end
+
     -- second pass:
     local lines = {}
     local i = 1
@@ -862,11 +888,11 @@ function M.decompile(block, delimiter)
         end
 
         local ins = nil
-        ins, i = read_instruction(block, i, labels)
+        ins, i = read_instruction(block, i, labels, reverse_defs)
         table.insert(lines, ins)
     end
 
-    return table.concat(lines, delimiter)
+    return table.concat(lines, opts.delim or '\n')
 end
 
 return M
