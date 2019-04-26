@@ -9,16 +9,20 @@ lgbtasm = require '.../lgbtasm'
 status, err = pcall(lgbtasm.compile, 'unknown')
 assert(status == false and string.match(err, 'unknown operation'))
 
--- symbol not found
-status, err = pcall(lgbtasm.compile, 'ld a,x')
-assert(status == false and string.match(err, 'symbol not found'))
+-- define not found
+status, err = pcall(lgbtasm.compile, '.next\nld a,.next')
+assert(status == false and string.match(err, 'define not found'))
+
+-- label not found
+status, err = pcall(lgbtasm.compile, 'jr x', {defs = {x = 1}})
+assert(status == false and string.match(err, 'local label not found'))
 
 -- 16-bit arg for 8-bit instruction
 status, err = pcall(lgbtasm.compile, 'ld a,c692')
 assert(status == false and string.match(err, 'invalid argument'))
 
 -- duplicate labels
-status, err = pcall(lgbtasm.compile, '.next; jr .next; .next', ';')
+status, err = pcall(lgbtasm.compile, '.next\njr .next\n.next')
 assert(status == false and string.match(err, 'duplicate label'))
 
 
@@ -48,6 +52,10 @@ assert(s == '\xcb\x67')
 s = lgbtasm.compile('ld (ff00+b5),a')
 assert(s == '\xe0\xb5')
 
+-- instruction using define
+s = lgbtasm.compile('ld a,x', {defs = {x = 0x3f}})
+assert(s == '\x3e\x3f')
+
 -- line with indent and comment
 s = lgbtasm.compile('    cp b ; comment')
 assert(s == '\xb8')
@@ -57,7 +65,7 @@ s = lgbtasm.compile('cp b\nret')
 assert(s == '\xb8\xc9')
 
 -- multiple instructions, semicolon-delimited
-s = lgbtasm.compile('cp b; ret', ';')
+s = lgbtasm.compile('cp b; ret', {delims = ';'})
 assert(s == '\xb8\xc9')
 
 -- block with commented blank line
@@ -69,11 +77,11 @@ status = pcall(lgbtasm.compile, 'cp b\ninvalid\nret')
 assert(status == false)
 
 -- forward jump to label
-s = lgbtasm.compile('jr .next; cp a,49; .next', ';')
+s = lgbtasm.compile('jr .next\ncp a,49\n.next')
 assert(s == '\x18\x02\xfe\x49')
 
 -- backward jump to label
-s = lgbtasm.compile('.loop; cp a,49; jr .loop', ';')
+s = lgbtasm.compile('.loop\ncp a,49\njr .loop')
 assert(s == '\xfe\x49\x18\xfc')
 
 -- multiple labels
@@ -111,6 +119,31 @@ assert(s == '\x1a')
 -- multiple-entry db
 s = lgbtasm.compile('db 1a,2b,3c')
 assert(s == '\x1a\x2b\x3c')
+
+-- define with insufficient arguments
+status, err = pcall(lgbtasm.compile, 'define x')
+assert(status == false and string.match(err, 'invalid define'))
+
+-- define with bad name
+status, err = pcall(lgbtasm.compile, 'define 1,01')
+assert(status == false and string.match(err, 'invalid define'))
+
+-- define with bad value
+status, err = pcall(lgbtasm.compile, 'define x,y')
+assert(status == false and string.match(err, 'invalid define'))
+
+-- duplicate define
+status, err = pcall(lgbtasm.compile, 'define x,01', {defs = {x = 0x01}})
+assert(status == false and string.match(err, 'duplicate define'))
+
+-- valid define
+defs = {}
+s = lgbtasm.compile('define x,01', {defs = defs})
+assert(#s == 0 and defs.x == 0x01)
+
+-- valid define in context
+s = lgbtasm.compile('define x,01\nld a,x')
+assert(s == '\x3e\x01' and defs.x == 0x01)
 
 
 -- decompiling errors:

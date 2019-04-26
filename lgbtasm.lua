@@ -2,9 +2,10 @@ local M = {}
 
 -- This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
 -- undecorated (no `$`, etc.) and hexadecimal, `a,` is required in mnemonics
--- that feature it, spaces do not appear after `,`s, and all keywords are
--- lower-case. User-defined symbols such as labels are case-sensitive. A label
--- and instruction cannot appear on the same line.
+-- that feature it, spaces do not appear after `,`s, parens are used for
+-- "dereferencing" memory, and all keywords are lower-case. User-defined
+-- symbols such as labels are case-sensitive. A label and instruction cannot
+-- appear on the same line.
 --
 -- The characters in `;*#` all begin inline comments, although instruction
 -- delimiter status overrides comment character status in the `compile()`
@@ -573,7 +574,7 @@ local function strip_line(line)
     return line
 end
 
--- Defines a sequence of comma-separated byte literals.
+-- Creates a sequence of comma-separated byte literals.
 local function compile_db_to_bytes(line)
     local bytes = {}
 
@@ -592,24 +593,47 @@ local function compile_db_to_bytes(line)
     return unpack(bytes)
 end
 
+-- Associates a symbol with a constant numeric value.
+local function add_define(line, defs)
+    local symbol, value = string.match(line, '^define ([%a_][%w_.]*),(%x+)$')
+
+    if not symbol then
+        error(line .. ': invalid define')
+    end
+
+    if defs[symbol] then
+        error(line .. ': duplicate define')
+    end
+
+    defs[symbol] = tonumber(value, 16)
+end
+
 -- as `compile_line_to_bytes()`, but with a preidentified operation and string
 -- argument.
-local function compile_op_with_arg(line, op, word, offset, labels)
+local function compile_op_with_arg(line, op, word, offset, labels, defs)
     -- labels are already numbers (or should be)
     local arg = tonumber(word, 16)
-    if labels and labels[word] then
-        arg = labels[word]
-
-        -- adjust for relative jump addresses
-        if string.match(line, '^jr') then
-            arg = (arg - offset - 2) % 0x100
+    local is_jr = string.match(line, '^jr')
+    if is_jr then
+        -- jr ops can only use local labels
+        if labels and labels[word] then
+            -- adjust for relative address
+            arg = (labels[word] - offset - 2) % 0x100
+        end
+    else
+        if defs and defs[word] then
+            arg = defs[word]
         end
     end
 
-    -- no label table = first pass; use placeholder zero
     if not arg then
+        -- no label table = first pass; use placeholder zero
         if labels then
-            error(line .. ': symbol not found: ' .. word)
+            if is_jr then
+                error(line .. ': local label not found: ' .. word)
+            else
+                error(line .. ': define not found: ' .. word)
+            end
         else
             arg = 0
         end
@@ -629,12 +653,17 @@ local function compile_op_with_arg(line, op, word, offset, labels)
 end
 
 -- as `compile_line()`, but returns a series of bytes instead of a byte string.
-local function compile_line_to_bytes(line, offset, labels)
+local function compile_line_to_bytes(line, offset, labels, defs)
     line = strip_line(line)
 
     -- first try matching against keywords
     if string.match(line, '^db') then
-        return compile_db_to_bytes(line)
+        return compile_db_to_bytes(line, defs)
+    elseif string.match(line, '^define') then
+        if defs then
+            add_define(line, defs)
+        end
+        return unpack({}) -- lol
     end
 
     -- then try raw index (works against nullary instructions)
@@ -655,7 +684,7 @@ local function compile_line_to_bytes(line, offset, labels)
 
         local op = ops[stripped_line]
         if op and index == op.pindex then
-            return compile_op_with_arg(line, op, word, offset, labels)
+            return compile_op_with_arg(line, op, word, offset, labels, defs)
         end
 
         index = index + 1 -- don't match the same location twice
@@ -665,18 +694,24 @@ local function compile_line_to_bytes(line, offset, labels)
 end
 
 -- as `compile()`, but treats the input as a single instruction.
-local function compile_line(line, offset, labels)
-    return string.char(compile_line_to_bytes(line, offset, labels))
+local function compile_line(line, offset, labels, defs)
+    return string.char(compile_line_to_bytes(line, offset, labels, defs))
 end
 
 -- Parses a series of instructions and returns the equivalent machine code as a
--- byte string. The optional `delimiters` argument determines what characters
--- can separate instructions in the input; it defaults to `'\n'`. Generates an
--- error if an instruction does not match any mnemonic, or if an invalid
--- argument is given to an instruction.
-function M.compile(block, delimiters)
-    delimiters = delimiters or '\n'
-    local delim_pattern = string.format('[^%s]+', delimiters)
+-- byte string. Generates an error if an instruction does not match any
+-- mnemonic, or if an invalid argument is given to an instruction. The optional
+-- `opts` table can have the fields:
+--
+-- - `delims`, a list of characters that separate instructions in the input
+--   (default `'\n'`).
+-- - `defs`, a table of string -> number mappings as if constructed by a series
+--   of `define` commands. Additional `define`s in the input block will add to
+--   the table.
+function M.compile(block, opts)
+    opts = opts or {}
+    local delims = opts.delims or '\n'
+    local delim_pattern = string.format('[^%s]+', delims)
     local label_pattern = '^%.[%w_]+$'
 
     -- first pass: determine label offsets
@@ -697,13 +732,14 @@ function M.compile(block, delimiters)
     end
 
     -- second pass:
+    local defs = opts.defs or {}
     local instructions = {}
     local offset = 0
     for line in string.gmatch(block, delim_pattern) do
         line = strip_line(line)
         if #line > 0 then
             if not string.match(line, label_pattern) then
-                local bytes = compile_line(line, offset, labels)
+                local bytes = compile_line(line, offset, labels, defs)
                 table.insert(instructions, bytes)
                 offset = offset + #bytes
             end

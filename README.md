@@ -20,9 +20,10 @@ The bad:
 
 This module uses bgb/no$gmb syntax, and enforces a strict style: numbers are
 undecorated (no `$`, etc.) and hexadecimal, `a,` is required in mnemonics
-that feature it, spaces do not appear after `,`s, and all keywords are
-lower-case. User-defined symbols such as labels are case-sensitive. A label
-and instruction cannot appear on the same line.
+that feature it, spaces do not appear after `,`s, parens are used for
+"dereferencing" memory, and all keywords are lower-case. User-defined
+symbols such as labels are case-sensitive. A label and instruction cannot
+appear on the same line.
 
 The characters in `;*#` all begin inline comments, although instruction
 delimiter status overrides comment character status in the `compile()`
@@ -35,17 +36,24 @@ jump destinations.
 
 ## Functions
 
-### `compile(block, delimiters)`
+### `compile(block, opts)`
 
 Parses a series of instructions and returns the equivalent machine code as a
-byte string. The optional `delimiters` argument determines what characters
-can separate instructions in the input; it defaults to `'\n'`. Generates an
-error if an instruction does not match any mnemonic, or if an invalid
-argument is given to an instruction.
+byte string. Generates an error if an instruction does not match any
+mnemonic, or if an invalid argument is given to an instruction. The optional
+`opts` table can have the fields:
+
+- `delims`, a list of characters that separate instructions in the input
+  (default `'\n'`).
+- `defs`, a table of string -> number mappings as if constructed by a series
+  of `define` commands. Additional `define`s in the input block will add to
+  the table.
 
 ```
 > lgbtasm = require 'lgbtasm'
-> lgbtasm.compile('cp b; ret', ';') == '\xb8\xc9'
+> lgbtasm.compile('cp b; ret', {delims = ';'}) == '\xb8\xc9'
+true
+> lgbtasm.compile('ld (x),a', {defs = {x = 0xc6c5}}) == '\xea\xc5\xc6'
 true
 ```
 
@@ -69,10 +77,20 @@ The following syntax is represented in bastardized EBNF.
 
 ### `db d8{,d8}`
 
-Defines a sequence of comma-separated byte literals.
+Creates a sequence of comma-separated byte literals.
 
 ```
 > lgbtasm = require 'lgbtasm'
-> lgbtasm.compile('db 01,02') == '\x01\x02'
+> lgbtasm.compile('db 01,02,03') == '\x01\x02\x03'
+true
+```
+
+### `define symbol,value`
+
+Associates a symbol with a constant numeric value.
+
+```
+> lgbtasm = require 'lgbtasm'
+> lgbtasm.compile('define x,01; ld a,x', {delims = ';'}) == '\x3e\x01'
 true
 ```
