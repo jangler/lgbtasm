@@ -640,7 +640,7 @@ local function compile_line_to_bytes(line, offset, labels)
     -- then try raw index (works against nullary instructions)
     if ops[line] then
         return ops[line].opcode
-    elseif cb_opcodes[line] ~= nil then
+    elseif cb_opcodes[line] then
         return 0xcb, cb_opcodes[line]
     end
 
@@ -718,20 +718,20 @@ local function read_instruction(block, i, labels)
 
     if opcode == 0xcb then
         if i + 1 > #block then
-            error('no data after prefix cb')
+            error('missing data after prefix cb')
         end
 
         return cb_mnemonics[string.byte(block, i + 1)], i + 2
     else
         local mnemonic = mnemonics[opcode]
-        if mnemonic == nil then
+        if not mnemonic then
             error(string.format('invalid opcode: %02x', opcode))
         end
 
-        if string.find(mnemonic, '%a8') ~= nil then
+        if string.find(mnemonic, '%a8') then
             if i + 1 > #block then
                 error(string.format(
-                    'no data after unary opcode %02x', opcode))
+                    'missing data after opcode %02x', opcode))
             end
 
             local arg = string.byte(block, i + 1)
@@ -739,23 +739,23 @@ local function read_instruction(block, i, labels)
                 string.format('%02x', arg))
 
             -- substitute labels for jr if possible
-            if labels ~= nil and string.match(mnemonic, '^jr') then
+            if labels and string.match(mnemonic, '^jr') then
                 local jr_dest = arg + i + 1
                 if arg >= 0x80 then
                     jr_dest = arg + i - 0xff
                 end
 
                 local label = labels[jr_dest]
-                if label ~= nil then
+                if label then
                     ins = string.gsub(mnemonic, '%a8', label)
                 end
             end
 
             return ins, i + 2
-        elseif string.find(mnemonic, '%a16') ~= nil then
+        elseif string.find(mnemonic, '%a16') then
             if i + 2 > #block then
                 error(string.format(
-                    'insufficient data after binary opcode %02x', opcode))
+                    'missing data after opcode %02x', opcode))
             end
 
             local arg1 = string.byte(block, i + 1)
@@ -781,6 +781,10 @@ function M.decompile(block, delimiter)
     local i = 1
     while i <= #block do
         local opcode = string.byte(block, i)
+        if not mnemonics[opcode] then
+            error(string.format('invalid opcode: %02x', opcode))
+        end
+
         if string.match(mnemonics[opcode], '^jr ') then
             local arg = string.byte(block, i + 1)
 
@@ -798,8 +802,8 @@ function M.decompile(block, delimiter)
     local prefix_counts = {}
     for i = 0, #block - 1 do
         local label = labels[i]
-        if label ~= nil then
-            if prefix_counts[label] == nil then
+        if label then
+            if not prefix_counts[label] then
                 prefix_counts[label] = 0
             else
                 labels[i] = string.format(
@@ -814,7 +818,7 @@ function M.decompile(block, delimiter)
     local lines = {}
     local i = 1
     while i <= #block do
-        if labels[i - 1] ~= nil then
+        if labels[i - 1] then
             table.insert(lines, labels[i - 1])
         end
 

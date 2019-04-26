@@ -109,23 +109,26 @@ s = lgbtasm.compile('db 1a,2b,3c')
 assert(s == '\x1a\x2b\x3c')
 
 
--- decompiling:
+-- decompiling errors:
 
 -- decompile invalid opcode
-status = pcall(lgbtasm.decompile, '\xd3')
-assert(status == false)
+status, err = pcall(lgbtasm.decompile, '\xd3')
+assert(status == false and string.match(err, 'invalid opcode'))
 
 -- decompile unary instruction w/o enough data for arg
-status = pcall(lgbtasm.decompile, '\x3e')
-assert(status == false)
+status, err = pcall(lgbtasm.decompile, '\x3e')
+assert(status == false and string.match(err, 'missing data'))
 
 -- decompile binary instruction w/o enough data for arg
-status = pcall(lgbtasm.decompile, '\x21\x92')
-assert(status == false)
+status, err = pcall(lgbtasm.decompile, '\x21\x92')
+assert(status == false and string.match(err, 'missing data'))
 
 -- decompile prefix cb instruction w/o enough data for arg
-status = pcall(lgbtasm.decompile, '\xcb')
-assert(status == false)
+status, err = pcall(lgbtasm.decompile, '\xcb')
+assert(status == false and string.match(err, 'missing data'))
+
+
+-- decompiling valid code:
 
 -- decompile nullary instruction
 s = lgbtasm.decompile('\xaf')
