@@ -17,6 +17,10 @@ assert(status == false and string.match(err, 'symbol not found'))
 status, err = pcall(lgbtasm.compile, 'ld a,c692')
 assert(status == false and string.match(err, 'invalid argument'))
 
+-- duplicate labels
+status, err = pcall(lgbtasm.compile, '.next; jr .next; .next', ';')
+assert(status == false and string.match(err, 'duplicate label'))
+
 
 -- compiling valid asm:
 

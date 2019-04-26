@@ -686,6 +686,9 @@ function M.compile(block, delimiters)
         line = strip_line(line)
         if #line > 0 then
             if string.match(line, label_pattern) then
+                if labels[line] then
+                    error('duplicate label: ' .. line)
+                end
                 labels[line] = offset
             else
                 offset = offset + #compile_line(line)
