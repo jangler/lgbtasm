@@ -108,10 +108,6 @@ assert(s == '\x7f\x18\x06\x78\x18\x06\x79\x18\x00\x7a\x18\xf7\x7b\x18\xf1')
 status, err = pcall(lgbtasm.compile, 'db')
 assert(status == false and string.match(err, 'missing argument'))
 
--- db with invalid syntax
-status, err = pcall(lgbtasm.compile, 'db 01, $02')
-assert(status == false and string.match(err, 'invalid argument'))
-
 -- single-entry db
 s = lgbtasm.compile('db 1a')
 assert(s == '\x1a')
@@ -119,6 +115,22 @@ assert(s == '\x1a')
 -- multiple-entry db
 s = lgbtasm.compile('db 1a,2b,3c')
 assert(s == '\x1a\x2b\x3c')
+
+-- db with defines
+s = lgbtasm.compile('db x,02,z', {defs = {x = 1, z = 3}})
+assert(s == '\x01\x02\x03')
+
+-- dw without defines
+s = lgbtasm.compile('dw 0201,0403,0605')
+assert(s == '\x01\x02\x03\x04\x05\x06')
+
+-- dw with defines
+s = lgbtasm.compile('dw x,0002,z', {defs = {x = 1, z = 3}})
+assert(s == '\x01\x00\x02\x00\x03\x00')
+
+-- db overflow
+status, err = pcall(lgbtasm.compile, 'db 0201,0403')
+assert(status == false and string.match(err, 'invalid argument'))
 
 -- define with insufficient arguments
 status, err = pcall(lgbtasm.compile, 'define x')

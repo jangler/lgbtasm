@@ -574,38 +574,73 @@ local function strip_line(line)
     return line
 end
 
--- Creates a sequence of comma-separated byte literals.
-local function compile_db_to_bytes(line)
-    local bytes = {}
+-- assembles a sequence of comma-separated numeric literals.
+local function compile_literals(bits, line, defs)
+    local values = {}
 
     local arg_string = string.sub(line, 4) -- strip '^db '
     for entry in string.gmatch(arg_string, '[^,]+') do
-        if not string.match(entry, '^%x%x$') then
+        local value = 0
+
+        -- just use a placeholder if defs isn't defined (i.e. first pass)
+        if defs then
+            if defs[entry] then
+                value = defs[entry]
+            else
+                if not string.match(entry, '^%x+$') then
+                    error(line .. ': define not found: ' .. entry)
+                end
+                value = tonumber(entry, 16)
+            end
+        end
+
+        if value < 0 or value >= math.pow(2, bits) then
             error(line .. ': invalid argument: ' .. entry)
         end
-        table.insert(bytes, tonumber(entry, 16))
+        table.insert(values, value)
     end
 
-    if #bytes == 0 then
+    if #values == 0 then
         error(line .. ': missing argument')
     end
 
+    -- convert values to big-endian byte sequences
+    local bytes = {}
+    for _, value in ipairs(values) do
+        for i = 1, bits / 8 do
+            table.insert(bytes, value % 0x100)
+            value = math.floor(value / 0x100)
+        end
+    end
     return unpack(bytes)
+end
+
+-- Creates a sequence of literal bytes.
+local function compile_db(line, defs)
+    return compile_literals(8, line, defs)
+end
+
+-- Creates a sequence of big-endian words.
+local function compile_dw(line, defs)
+    return compile_literals(16, line, defs)
 end
 
 -- Associates a symbol with a constant numeric value.
 local function add_define(line, defs)
-    local symbol, value = string.match(line, '^define ([%a_][%w_.]*),(%x+)$')
+    if not defs then
+        return unpack({})
+    end
 
+    local symbol, value = string.match(line, '^define ([%a_][%w_.]*),(%x+)$')
     if not symbol then
         error(line .. ': invalid define')
     end
-
     if defs[symbol] then
         error(line .. ': duplicate define')
     end
-
     defs[symbol] = tonumber(value, 16)
+
+    return unpack({})
 end
 
 -- as `compile_line_to_bytes()`, but with a preidentified operation and string
@@ -652,18 +687,21 @@ local function compile_op_with_arg(line, op, word, offset, labels, defs)
     end
 end
 
+-- functions invoked for keyword commands. args are (line, defs).
+local keyword_funcs = {
+    db = compile_db,
+    dw = compile_dw,
+    define = add_define,
+}
+
 -- as `compile_line()`, but returns a series of bytes instead of a byte string.
 local function compile_line_to_bytes(line, offset, labels, defs)
     line = strip_line(line)
 
-    -- first try matching against keywords
-    if string.match(line, '^db') then
-        return compile_db_to_bytes(line, defs)
-    elseif string.match(line, '^define') then
-        if defs then
-            add_define(line, defs)
-        end
-        return unpack({}) -- lol
+    -- first try matching a keyword
+    local keyword = string.match(line, '^%a+')
+    if keyword_funcs[keyword] then
+        return keyword_funcs[keyword](line, defs)
     end
 
     -- then try raw index (works against nullary instructions)

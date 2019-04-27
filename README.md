@@ -84,11 +84,21 @@ The following syntax is represented in bastardized EBNF.
 
 ### `db d8{,d8}`
 
-Creates a sequence of comma-separated byte literals.
+Creates a sequence of literal bytes.
 
 ```
 > lgbtasm = require 'lgbtasm'
 > lgbtasm.compile('db 01,02,03') == '\x01\x02\x03'
+true
+```
+
+### `dw d16{,d16}`
+
+Creates a sequence of big-endian words.
+
+```
+> lgbtasm = require 'lgbtasm'
+> lgbtasm.compile('dw 0201,0403') == '\x01\x02\x03\x04'
 true
 ```
 
