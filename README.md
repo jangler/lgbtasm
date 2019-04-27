@@ -43,8 +43,8 @@ byte string. Generates an error if an instruction does not match any
 mnemonic, or if an invalid argument is given to an instruction. The optional
 `opts` table can have the fields:
 
-- `delims`, a list of characters that separate instructions in the input
-  (default `'\n'`).
+- `delims`, a list (string) of characters that separate instructions in the
+  input (default `'\n'`).
 - `defs`, a table of string -> number mappings as if constructed by a series
   of `define` commands. Additional `define`s in the input block will add to
   the table.
