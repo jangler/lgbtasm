@@ -104,7 +104,8 @@ true
 
 ### `define symbol,value`
 
-Associates a symbol with a constant numeric value.
+Associates a symbol with a constant numeric value. Redefining a symbol is not
+an error.
 
 ```
 > lgbtasm = require 'lgbtasm'

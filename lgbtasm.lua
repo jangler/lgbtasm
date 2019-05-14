@@ -635,9 +635,6 @@ local function add_define(line, defs)
     if not symbol then
         error(line .. ': invalid define')
     end
-    if defs[symbol] then
-        error(line .. ': duplicate define')
-    end
     defs[symbol] = tonumber(value, 16)
 
     return unpack({})

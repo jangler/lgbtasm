@@ -144,10 +144,6 @@ assert(status == false and string.match(err, 'invalid define'))
 status, err = pcall(lgbtasm.compile, 'define x,y')
 assert(status == false and string.match(err, 'invalid define'))
 
--- duplicate define
-status, err = pcall(lgbtasm.compile, 'define x,01', {defs = {x = 0x01}})
-assert(status == false and string.match(err, 'duplicate define'))
-
 -- valid define
 defs = {}
 s = lgbtasm.compile('define x,01', {defs = defs})
