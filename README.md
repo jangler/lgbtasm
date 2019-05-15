@@ -11,9 +11,10 @@ The good:
 
 The bad:
 
-- Not very tested
-- Very limited command language
-- It's only a module and nothing executable
+- Limited command language
+- Module only, no executable
+
+lgbtasm is used in https://github.com/jangler/oracles-randomizer .
 
 
 ## Usage
