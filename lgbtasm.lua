@@ -604,7 +604,7 @@ local function compile_literals(bits, line, defs)
         error(line .. ': missing argument')
     end
 
-    -- convert values to big-endian byte sequences
+    -- convert values to little-endian byte sequences
     local bytes = {}
     for _, value in ipairs(values) do
         for i = 1, bits / 8 do
@@ -620,7 +620,7 @@ local function compile_db(line, defs)
     return compile_literals(8, line, defs)
 end
 
--- Creates a sequence of big-endian words.
+-- Creates a sequence of little-endian words.
 local function compile_dw(line, defs)
     return compile_literals(16, line, defs)
 end

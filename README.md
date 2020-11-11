@@ -95,7 +95,7 @@ true
 
 ### `dw d16{,d16}`
 
-Creates a sequence of big-endian words.
+Creates a sequence of little-endian words.
 
 ```
 > lgbtasm = require 'lgbtasm'
